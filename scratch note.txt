@@ -1,0 +1,64 @@
+menu │add 	│button color:red text:what i want autoclose:true
+     │remove	│panel 
+      edit	 defaults width:5
+
+/? add container startpos color endpos
+/? edit container width heigth color
+
+anyhing changed should be added in config.json
+values could be written in any order!
+
+create full command string by adding every command + " args[i]" starting from i=2 beacuse we dont need menu add/remove
+find ":" get left side of it till "space" ?//write attribute in dictionary 
+ if find next ":" 
+   get left side of it from nearest space to ":" and add in its attribute value
+ else get all right side as value
+ return
+ do it for next ":" symbol
+
+if width or heigth is in dictionary ignore endpos attribute ?/ dictionary should have default values inside?
+menu add button  
+
+commands should have default values:
+[button]
+color:red
+text:defaultButton  // if you want clear button should use text:" "
+command:"chat.say default command works" 
+autoclose:false
+startpos: left top aviable cell, offseted 1 cell 
+width:4
+height:2
+endpos:none
+
+show grid off grid NonConfigSaveable
+var gridscale = 10
+showgrid(gridscalen lineWidth){
+ posMin.x can only change from 0 to 1
+ i.e if gridscale is 10 we should draw panels in every 1/10f and posMin.y should also have 1/10f
+ 
+ /* when drawing Vertical thin panels: anchorMin.x anchorMin.y=0 anchorMax.x=(anchorMin.x+lineWidth) anchorMax.y=1
+    we change only anchorMin.x=(i*(1/gridscale)f)
+    repeat untill /? (i*(1/gridscale)f) != 1;
+
+ !! when drawing horizontal thin panels: anchorMin.x=0 anchorMin.y=(i*(1/gridscale)f)-lineWidth/2 anchorMax.x=1 anchotMax.y=anchorMax.y+lineWidth) same goes on verticals
+ /? we have to inverse Y soemwhere, just by making it 1-y
+}
+
+implement aviability positions
+and give startpos top left aviable position if not given any current values
+
+vector2 startpos(arg[0] arg[1])
+uechveli moewodeba width heigth da endpos, an default parametrebi an custom
+calculateGridPosition(startpos.x startpos.y  width heigth endpos){
+	anchorMin.x = startpos.x*(1/gridscale)
+	anchorMin.y = startpos.x*(1/gridscale)
+   if(endpos==undefined){
+ anchorMax.x=anchorMin.x+(width*(1/gridscale))
+ anchotMax.y=anchorMin.y+(heigth*(1/gridscale))
+}else
+ anchorMax.x=endpos.x*(1/gridscale)
+ anchorMax.y=endpos.y*(1/gridscale)
+}
+return new float[] { anchorMin.x, anchorMin.y, anchorMax.x, anchorMax.y };
+
+}
