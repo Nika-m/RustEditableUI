@@ -44,9 +44,10 @@ y cells should be multiplied by 16/9
 for(int i=0; i*(1/gridscale)<=1;i++)
  !! drawing vertical   thin panels: anchorMin.x=(i*(1/gridscale)-lineWidth/2 anchorMin.y=0 anchorMax.x=anchorMin.y+lineWidth anchotMax.y=1
 for(int i=0; i*(1/gridscale*16/9)<=1;i++)
- !! drawing horizontal thin panels: anchorMin.x=0 anchorMin.y=(i*(1/gridscale*16/9))-lineWidth/2 anchorMax.x=1 anchotMax.y=anchorMin.y+lineWidth) same goes on verticals
- 
-/? we have to inverse Y soemwhere, just by making it 1-y ! Y should be reversed in input
+ !! drawing horizontal thin panels: anchorMin.x=0 anchorMin.y=(i*(1/gridscale*16/9))-lineWidth/2 anchorMax.x=1 anchotMax.y=anchorMin.y+lineWidth) same goes on verticals 
+ !!Y Reversed anchorMin.x=0 anchorMin.y=1-((i*(1/gridscale*16/9))-lineWidth/2) anchorMax.x=1 anchotMax.y=1-(anchorMin.y+lineWidth))
+
+/? we have to inverse Y soemwhere, just by making it 1-y ! /? Y should be reversed in input //already reversed in for looop 
 }
 
 implement aviability positions
@@ -56,13 +57,13 @@ vector2 startpos(arg[0] arg[1])
 uechveli moewodeba width heigth da endpos, an default parametrebi an custom
 calculateGridPosition(startpos.x startpos.y  width heigth endpos){
 	anchorMin.x = startpos.x*(1/gridscale)
-	anchorMin.y = startpos.x*(1/gridscale)
+	anchorMin.y = 1-(startpos.x*(1/gridscale*16/9))
    if(endpos==undefined){
  anchorMax.x=anchorMin.x+(width*(1/gridscale))
- anchotMax.y=anchorMin.y+(heigth*(1/gridscale))
+ anchorMax.y=anchorMin.y-(heigth*(1/gridscale*16/9))
 }else
  anchorMax.x=endpos.x*(1/gridscale)
- anchorMax.y=endpos.y*(1/gridscale)
+ anchorMax.y=1-endpos.y*(1/gridscale*16/9)
 }
 return new float[] { anchorMin.x, anchorMin.y, anchorMax.x, anchorMax.y };
 
