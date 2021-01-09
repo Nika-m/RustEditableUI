@@ -1,0 +1,2 @@
+D:\Memory\Windows 10\Desktop\Studio\Live Projects\RustEditableUI\obj\Debug\RustEditableUI.csprojResolveAssemblyReference.cache
+D:\Memory\Windows 10\Desktop\Studio\Live Projects\RustEditableUI\obj\Debug\RustEditableUI.csproj.CoreCompileInputs.cache
