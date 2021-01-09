@@ -1,9 +1,10 @@
 ﻿using Oxide.Game.Rust.Cui;
-//using Oxide.Core.Libraries.Covalence;
+using Oxide.Core.Libraries.Covalence;
+
 
 namespace Oxide.Plugins
 {
-    [Info("RustEditableUI", "Nika", "0.0.1")]
+    [Info("RustEditableUI", "Nika", "0.1.1")]
     public class RustEditableUI : RustPlugin
     {
         #region CuiTEMPLATE
@@ -115,16 +116,130 @@ namespace Oxide.Plugins
             CuiHelper.AddUi(player, filledTemplate);
         }
 
-        [ChatCommand("menu")]
-        private void chatCommand_menu(BasePlayer player, string command, string[] args)
+        [ChatCommand("check")]
+        private void chatCommand_check(BasePlayer player, string command, string[] args)
         {
-            player.ChatMessage("chat command menu executed successfuly");
+            player.ChatMessage("ChatMessage: chat command check executed successfuly");
+            SendReply(player, "<color=orange> Sendreply: chat command check executed successfuly </color>");
+            ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "say say_command_from_server");
+            rust.RunServerCommand("say secondCommandExecutedFromServer");
+            PrintToChat("printToChat command executed");
+            PrintToChat(player, "printToChat command executed with player");
+            //player.GiveItem(item);
+            // Server.Command(string.Format("env.time {0}", 24);
         }
         void OnPlayerConnected(Network.Message packet)
         {
-
             //welcome text form server in chat
             //put defaulr building kit in players inventory
         }
+     #region MinecraftCommands
+        //minecraft time set command
+        [ChatCommand("time")]
+        private void chatCommand_time(BasePlayer player, string command, string[] args)
+        {
+            if (args[0] == "set") {
+                rust.RunServerCommand("env.time " + args[1]);
+            }
+        }
+
+        [ChatCommand("weather")]
+        private void chatCommand_weather(BasePlayer player, string command, string[] args)
+        {
+            switch (args[0]) {
+                case "clear":
+                    rust.RunServerCommand("weather.load Clear");
+                    break;
+                case "rain":
+                    rust.RunServerCommand("weather.load RainHeavy");
+                    break;
+                case "thunder":
+                    rust.RunServerCommand("weather.load Storm");
+                    break;
+                case "fog":
+                    rust.RunServerCommand("weather.load Fog");
+                    break;
+                case "cloudy":
+                    rust.RunServerCommand("weather.load Overcast");
+                    break;
+
+            }
+        }
+#endregion 
+
+        [ChatCommand("menu")]
+        private void chatCommand_menu(BasePlayer player, string command, string[] args) {
+            CuiHelper.DestroyUi(player, "menu_panel");
+            CuiElementContainer menu = generate_menu(player);
+            CuiHelper.AddUi(player, menu);
+        }
+
+        [ConsoleCommand("menu_close")]
+        private void menu_close(ConsoleSystem.Arg Args)
+        {
+            //BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
+            //var player = Args.Player();
+            //var player = arg.Connection.player as BasePlayer;
+            var player = Args.Connection.player as BasePlayer;
+            if (player == null)
+                return;
+            CuiHelper.DestroyUi(player, "menu_panel");
+        }
+
+        //clickable argument in command
+        CuiElementContainer generate_menu(BasePlayer player) {
+
+            var container = new CuiElementContainer();
+
+            var menuPanel = container.Add(new CuiPanel {
+                Image = {
+                    Color = "0 0 0 0.5"
+                },
+                RectTransform = {
+                    AnchorMin = "0.2 0.2",
+                    AnchorMax = "0.8 0.8"
+                },
+
+                CursorEnabled = true
+
+
+            }, "Hud", "menu_panel");
+
+            var closeButton = container.Add(new CuiButton {
+                Button = {
+                    Command = "menu_close " + player.userID.ToString(),
+                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                    Color = "1 0 0 0.8"
+                },
+                RectTransform = {
+                    AnchorMin = "0.9 0.95",
+                    AnchorMax = "1 1"
+                },
+                Text = {
+                    Text = "X",
+                    FontSize = 10,
+                    Align = UnityEngine.TextAnchor.MiddleCenter,
+                }
+            }, menuPanel, "close_button");
+
+            //var blurredElement = new CuiElement 
+            //{ 
+            //    Name = "blurred_element",
+            //    Parent = menuPanel,
+            //    Components ={
+            //        new CuiRawImageComponent { Color = "0 0 0 0.5", Sprite = "assets/content/materials/highlight.png", Material = "assets/content/ui/uibackgroundblur-ingamemenu.mat" },
+            //        new CuiRectTransformComponent{ AnchorMin = "0 0", AnchorMax = "0.9 0.9" }
+            //    }
+            //};
+            //container.Add(blurredElement);
+            return container;
+
+        }
+
+
     }
+  
+
+
 }
+
