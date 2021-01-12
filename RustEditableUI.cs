@@ -205,8 +205,8 @@ namespace Oxide.Plugins
             //var player = Args.Player();
             //var player = arg.Connection.player as BasePlayer;
             //var player = Args.Connection.player as BasePlayer;
-            if (player == null)
-                return;
+            //if (player == null)
+            //   return;
             //CuiHelper.DestroyUi(player, "menu_panel");
             CuiElementContainer menuWithGrid = generate_grid();
             PrintToChat("imin");
@@ -217,14 +217,14 @@ namespace Oxide.Plugins
 
         CuiElementContainer container = new CuiElementContainer();
 
-        CuiElementContainer generate_grid(double gridscale = 10, double linewidth = 2)
+        CuiElementContainer generate_grid(double gridscale = 12, double linewidth = 3)
         {
             //generate panel for grid
             PrintToChat("generating grid");
             var gridPanel = container.Add(new CuiPanel
             {
                 Image = {
-                    Color = "1 0 0 0.5" //fully transparent
+                    Color = "0 0 0 0" //fully transparent
                 },
                 RectTransform = {
                     AnchorMin = "0 0",
@@ -233,20 +233,22 @@ namespace Oxide.Plugins
             }, "menu_panel", "grid_panel");
 
             //generating vertical lines in grid_panel
+            PrintToConsole("verticals grid");
             Puts("verticals grid");
-            linewidth /= 10;
+            linewidth /= 400;
             var xOffset = System.Math.Round((1 / gridscale), 2);
-            for (int i = 0; i * xOffset <= 1; i++)
+            for (int i = 1; i * xOffset < 1; i++)
             {
-                PrintToChat(i + " " + (i * xOffset).ToString());
+
+
                 container.Add(new CuiPanel
                 {
                     Image = {
                     Color = "1 1 1 0.5"
                 },
                     RectTransform = {
-                    AnchorMin = ((i*xOffset-linewidth/2)+" 0"),
-                    AnchorMax = ((i*xOffset+linewidth/2)+" 1")
+                    AnchorMin = (System.Math.Round((i*xOffset-linewidth/2),3)+" 0"),
+                    AnchorMax = (System.Math.Round((i*xOffset+linewidth/2),3)+" 1")
                     //AnchorMax = (AnchorMin.x+linewidth)+" 1"
                 },
                 }, "grid_panel", $"vertical_line_{i}");
@@ -255,9 +257,19 @@ namespace Oxide.Plugins
             //generating horizontal lines in grid_panel
             Puts("size before: " + container.Count);
 
+            //horizontals grid
             var yOffset = System.Math.Round((1 / gridscale * 16 / 9), 2);
-            for (int i = 0; i * yOffset <= 1; i++) // 16/9 considering aspect ratio 
+            for (int i = 1; i * yOffset < 1; i++) // 16/9 considering aspect ratio 
             {
+                PrintToConsole(i.ToString());
+                PrintToConsole((i * xOffset + ""));
+                PrintToConsole(System.Math.Round((i * xOffset - linewidth / 2), 3) + " 0");
+                PrintToConsole(System.Math.Round((i * xOffset + linewidth / 2), 3) + " 0");
+
+                Puts(i.ToString());
+                Puts((i * xOffset + ""));
+                Puts(System.Math.Round((i * xOffset - linewidth / 2), 2) + " 0");
+                Puts(System.Math.Round((i * xOffset + linewidth / 2), 2) + " 0");
 
                 container.Add(new CuiPanel
                 {
@@ -265,8 +277,8 @@ namespace Oxide.Plugins
                     Color = "1 1 1 0.5"
                 },
                     RectTransform = {
-                    AnchorMin = "0 "+((i*yOffset-linewidth/2)),
-                    AnchorMax = "1 "+((i*yOffset+linewidth/2)) //not reversing Y,it wont make any sence for grid lines
+                    AnchorMin = "0 "+(System.Math.Round((i*yOffset-linewidth/2),2)),
+                    AnchorMax = "1 "+(System.Math.Round((i*yOffset+linewidth/2),2)) //not reversing Y,it wont make any sence for grid lines
                     //AnchorMax = (AnchorMin.y+linewidth)+" 1"
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
@@ -322,7 +334,7 @@ namespace Oxide.Plugins
                 Button = {
                     Command = "show_grid " + player.userID.ToString(),
                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "0 2 0 0.8"
+                    Color = "0 2 0 0.5"
                 },
                 RectTransform = {
                     AnchorMin = "0.9 0.05",
