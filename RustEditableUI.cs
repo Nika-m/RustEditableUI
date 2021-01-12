@@ -1,7 +1,6 @@
 ﻿using Oxide.Game.Rust.Cui;
 using Oxide.Core.Libraries.Covalence;
 
-
 namespace Oxide.Plugins
 {
     [Info("RustEditableUI", "Nika", "0.1.1")]
@@ -104,7 +103,7 @@ namespace Oxide.Plugins
         {
             Puts("here we go");
         }
-        
+
         void OnPlayerConnected(Network.Message packet)
         {
             //welcome text form server in chat
@@ -115,7 +114,8 @@ namespace Oxide.Plugins
         [ChatCommand("time")]
         private void chatCommand_time(BasePlayer player, string command, string[] args)
         {
-            if (args[0] == "set") {
+            if (args[0] == "set")
+            {
                 rust.RunServerCommand("env.time " + args[1]);
             }
         }
@@ -123,7 +123,8 @@ namespace Oxide.Plugins
         [ChatCommand("weather")]
         private void chatCommand_weather(BasePlayer player, string command, string[] args)
         {
-            switch (args[0]) {
+            switch (args[0])
+            {
                 case "clear":
                     rust.RunServerCommand("weather.load Clear");
                     break;
@@ -149,19 +150,20 @@ namespace Oxide.Plugins
         [ChatCommand("check")]
         private void chatCommand_check(BasePlayer player, string command, string[] args)
         {
-            
             player.ChatMessage("ChatMessage: chat command check executed successfuly");
             SendReply(player, "<color=orange> Sendreply: chat command check executed successfuly </color>");
             ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "say say_command_from_server");
             rust.RunServerCommand("say secondCommandExecutedFromServer");
             PrintToChat("printToChat command executed");
             PrintToChat(player, "printToChat command executed with player");
+
             //player.GiveItem(item);
             // Server.Command(string.Format("env.time {0}", 24);
         }
 
         [ChatCommand("menu")]
-        private void chatCommand_menu(BasePlayer player, string command, string[] args) {
+        private void chatCommand_menu(BasePlayer player, string command, string[] args)
+        {
             CuiHelper.DestroyUi(player, "menu_panel");
             CuiElementContainer menu = generate_menu(player);
             CuiHelper.AddUi(player, menu);
@@ -206,7 +208,8 @@ namespace Oxide.Plugins
             if (player == null)
                 return;
             //CuiHelper.DestroyUi(player, "menu_panel");
-            CuiElementContainer menuWithGrid = generate_grid(player);
+            CuiElementContainer menuWithGrid = generate_grid();
+            PrintToChat("imin");
             CuiHelper.AddUi(player, menuWithGrid);
 
         }
@@ -214,7 +217,8 @@ namespace Oxide.Plugins
 
         CuiElementContainer container = new CuiElementContainer();
 
-        CuiElementContainer generate_grid(BasePlayer player, int gridscale = 10, double linewidth = 2 ) {
+        CuiElementContainer generate_grid(double gridscale = 10, double linewidth = 2)
+        {
             //generate panel for grid
             PrintToChat("generating grid");
             var gridPanel = container.Add(new CuiPanel
@@ -227,42 +231,48 @@ namespace Oxide.Plugins
                     AnchorMax = "1 1"
                 },
             }, "menu_panel", "grid_panel");
-    
+
             //generating vertical lines in grid_panel
-            PrintToChat("verticals grid");
+            Puts("verticals grid");
             linewidth /= 10;
-            for(int i=0; i*(1/gridscale) <= 1; i++){
+            var xOffset = System.Math.Round((1 / gridscale), 2);
+            for (int i = 0; i * xOffset <= 1; i++)
+            {
+                PrintToChat(i + " " + (i * xOffset).ToString());
                 container.Add(new CuiPanel
                 {
                     Image = {
                     Color = "1 1 1 0.5"
                 },
                     RectTransform = {
-                    AnchorMin = ((i*(1/gridscale)-linewidth/2)+" 0"),
-                    AnchorMax = ((i*(1/gridscale)+linewidth/2)+" 1")
+                    AnchorMin = ((i*xOffset-linewidth/2)+" 0"),
+                    AnchorMax = ((i*xOffset+linewidth/2)+" 1")
                     //AnchorMax = (AnchorMin.x+linewidth)+" 1"
                 },
                 }, "grid_panel", $"vertical_line_{i}");
-                PrintToChat(i+"");
+
             }
             //generating horizontal lines in grid_panel
-            PrintToChat("size: " + container.Count);
-            for (int i=0; i*(1/gridscale*16/9) <= 1; i++) // 16/9 considering aspect ratio
+            Puts("size before: " + container.Count);
+
+            var yOffset = System.Math.Round((1 / gridscale * 16 / 9), 2);
+            for (int i = 0; i * yOffset <= 1; i++) // 16/9 considering aspect ratio 
             {
+
                 container.Add(new CuiPanel
                 {
                     Image = {
                     Color = "1 1 1 0.5"
                 },
                     RectTransform = {
-                    AnchorMin = "0 "+((i*(1/gridscale*16/9)-linewidth/2)),
-                    AnchorMax = "1 "+((i*(1/gridscale*16/9)+linewidth/2)) //not reversing Y,it wont make any sence for grid lines
+                    AnchorMin = "0 "+((i*yOffset-linewidth/2)),
+                    AnchorMax = "1 "+((i*yOffset+linewidth/2)) //not reversing Y,it wont make any sence for grid lines
                     //AnchorMax = (AnchorMin.y+linewidth)+" 1"
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
 
             }
-            PrintToChat("size: "+container.Count);
+            Puts("size after: " + container.Count);
 
 
             return container; //returns grid_panel full of grid lines
@@ -270,11 +280,13 @@ namespace Oxide.Plugins
 
 
         //clickable argument in command
-        CuiElementContainer generate_menu(BasePlayer player) {
+        CuiElementContainer generate_menu(BasePlayer player)
+        {
 
             //var container = new CuiElementContainer();
 
-            var menuPanel = container.Add(new CuiPanel {
+            var menuPanel = container.Add(new CuiPanel
+            {
                 Image = {
                     Color = "0 0 0 0.5"
                 },
@@ -287,7 +299,8 @@ namespace Oxide.Plugins
 
             }, "Hud", "menu_panel");
 
-            var closeButton = container.Add(new CuiButton {
+            var closeButton = container.Add(new CuiButton
+            {
                 Button = {
                     Command = "menu_close " + player.userID.ToString(),
                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
@@ -338,7 +351,7 @@ namespace Oxide.Plugins
 
 
     }
-  
+
 
 
 }
