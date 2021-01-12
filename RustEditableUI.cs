@@ -104,36 +104,13 @@ namespace Oxide.Plugins
         {
             Puts("here we go");
         }
-        [Command("menu")]
-        private void consoleCommand_menu(BasePlayer player, string command, string[] args)
-        {
-            //var bPlayer = (BasePlayer)player.Object;
-            var labelText = "Hello World!";
-            var buttonText = "Close";
-            var filledTemplate = TEMPLATE.Replace("{labeltext}", labelText).Replace("{buttontext}", buttonText);
-
-            CuiHelper.DestroyUi(player, "RustEditableUI");
-            CuiHelper.AddUi(player, filledTemplate);
-        }
-
-        [ChatCommand("check")]
-        private void chatCommand_check(BasePlayer player, string command, string[] args)
-        {
-            player.ChatMessage("ChatMessage: chat command check executed successfuly");
-            SendReply(player, "<color=orange> Sendreply: chat command check executed successfuly </color>");
-            ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "say say_command_from_server");
-            rust.RunServerCommand("say secondCommandExecutedFromServer");
-            PrintToChat("printToChat command executed");
-            PrintToChat(player, "printToChat command executed with player");
-            //player.GiveItem(item);
-            // Server.Command(string.Format("env.time {0}", 24);
-        }
+        
         void OnPlayerConnected(Network.Message packet)
         {
             //welcome text form server in chat
             //put defaulr building kit in players inventory
         }
-     #region MinecraftCommands
+        #region MinecraftCommands
         //minecraft time set command
         [ChatCommand("time")]
         private void chatCommand_time(BasePlayer player, string command, string[] args)
@@ -165,7 +142,23 @@ namespace Oxide.Plugins
 
             }
         }
-#endregion 
+        #endregion
+
+        #region ChatCommands
+
+        [ChatCommand("check")]
+        private void chatCommand_check(BasePlayer player, string command, string[] args)
+        {
+            
+            player.ChatMessage("ChatMessage: chat command check executed successfuly");
+            SendReply(player, "<color=orange> Sendreply: chat command check executed successfuly </color>");
+            ConsoleSystem.Run(ConsoleSystem.Option.Server.Quiet(), "say say_command_from_server");
+            rust.RunServerCommand("say secondCommandExecutedFromServer");
+            PrintToChat("printToChat command executed");
+            PrintToChat(player, "printToChat command executed with player");
+            //player.GiveItem(item);
+            // Server.Command(string.Format("env.time {0}", 24);
+        }
 
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string command, string[] args) {
@@ -173,23 +166,113 @@ namespace Oxide.Plugins
             CuiElementContainer menu = generate_menu(player);
             CuiHelper.AddUi(player, menu);
         }
+        #endregion
+
+        #region ConsoleCommands
+
+        [Command("menu")]
+        private void consoleCommand_menu(BasePlayer player, string command, string[] args)
+        {
+            //var bPlayer = (BasePlayer)player.Object;
+            var labelText = "Hello World!";
+            var buttonText = "Close";
+            var filledTemplate = TEMPLATE.Replace("{labeltext}", labelText).Replace("{buttontext}", buttonText);
+
+            CuiHelper.DestroyUi(player, "RustEditableUI");
+            CuiHelper.AddUi(player, filledTemplate);
+        }
 
         [ConsoleCommand("menu_close")]
-        private void menu_close(ConsoleSystem.Arg Args)
+        private void cmd_menuClose(ConsoleSystem.Arg Args)
         {
-            //BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
             //var player = Args.Player();
             //var player = arg.Connection.player as BasePlayer;
-            var player = Args.Connection.player as BasePlayer;
+            //var player = Args.Connection.player as BasePlayer;
             if (player == null)
+            {
+                PrintToChat("player is null");
                 return;
+            }
             CuiHelper.DestroyUi(player, "menu_panel");
         }
+        [ConsoleCommand("show_grid")]
+        private void cmd_showGrid(ConsoleSystem.Arg Args)
+        {
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
+            //var player = Args.Player();
+            //var player = arg.Connection.player as BasePlayer;
+            //var player = Args.Connection.player as BasePlayer;
+            if (player == null)
+                return;
+            //CuiHelper.DestroyUi(player, "menu_panel");
+            CuiElementContainer menuWithGrid = generate_grid(player);
+            CuiHelper.AddUi(player, menuWithGrid);
+
+        }
+        #endregion
+
+        CuiElementContainer container = new CuiElementContainer();
+
+        CuiElementContainer generate_grid(BasePlayer player, int gridscale = 10, double linewidth = 2 ) {
+            //generate panel for grid
+            PrintToChat("generating grid");
+            var gridPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                    Color = "1 0 0 0.5" //fully transparent
+                },
+                RectTransform = {
+                    AnchorMin = "0 0",
+                    AnchorMax = "1 1"
+                },
+            }, "menu_panel", "grid_panel");
+    
+            //generating vertical lines in grid_panel
+            PrintToChat("verticals grid");
+            linewidth /= 10;
+            for(int i=0; i*(1/gridscale) <= 1; i++){
+                container.Add(new CuiPanel
+                {
+                    Image = {
+                    Color = "1 1 1 0.5"
+                },
+                    RectTransform = {
+                    AnchorMin = ((i*(1/gridscale)-linewidth/2)+" 0"),
+                    AnchorMax = ((i*(1/gridscale)+linewidth/2)+" 1")
+                    //AnchorMax = (AnchorMin.x+linewidth)+" 1"
+                },
+                }, "grid_panel", $"vertical_line_{i}");
+                PrintToChat(i+"");
+            }
+            //generating horizontal lines in grid_panel
+            PrintToChat("size: " + container.Count);
+            for (int i=0; i*(1/gridscale*16/9) <= 1; i++) // 16/9 considering aspect ratio
+            {
+                container.Add(new CuiPanel
+                {
+                    Image = {
+                    Color = "1 1 1 0.5"
+                },
+                    RectTransform = {
+                    AnchorMin = "0 "+((i*(1/gridscale*16/9)-linewidth/2)),
+                    AnchorMax = "1 "+((i*(1/gridscale*16/9)+linewidth/2)) //not reversing Y,it wont make any sence for grid lines
+                    //AnchorMax = (AnchorMin.y+linewidth)+" 1"
+                },
+                }, "grid_panel", $"horizontal_line_{i}");
+
+            }
+            PrintToChat("size: "+container.Count);
+
+
+            return container; //returns grid_panel full of grid lines
+        }
+
 
         //clickable argument in command
         CuiElementContainer generate_menu(BasePlayer player) {
 
-            var container = new CuiElementContainer();
+            //var container = new CuiElementContainer();
 
             var menuPanel = container.Add(new CuiPanel {
                 Image = {
@@ -199,7 +282,6 @@ namespace Oxide.Plugins
                     AnchorMin = "0.2 0.2",
                     AnchorMax = "0.8 0.8"
                 },
-
                 CursorEnabled = true
 
 
@@ -221,6 +303,24 @@ namespace Oxide.Plugins
                     Align = UnityEngine.TextAnchor.MiddleCenter,
                 }
             }, menuPanel, "close_button");
+
+            var gridButton = container.Add(new CuiButton
+            {
+                Button = {
+                    Command = "show_grid " + player.userID.ToString(),
+                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                    Color = "0 2 0 0.8"
+                },
+                RectTransform = {
+                    AnchorMin = "0.9 0.05",
+                    AnchorMax = "1 0"
+                },
+                Text = {
+                    Text = "Grid",
+                    FontSize = 10,
+                    Align = UnityEngine.TextAnchor.MiddleCenter,
+                }
+            }, menuPanel, "grid_button");
 
             //var blurredElement = new CuiElement 
             //{ 
