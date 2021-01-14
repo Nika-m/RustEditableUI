@@ -218,10 +218,9 @@ namespace Oxide.Plugins
 
         CuiElementContainer container = new CuiElementContainer();
 
-        CuiElementContainer generate_grid(double gridscale = 20, double linewidth = 3)
+        CuiElementContainer generate_grid(double gridscale = 20, double linewidth = 1)
         {
             //generate panel for grid
-            PrintToChat("generating grid");
             var gridPanel = container.Add(new CuiPanel
             {
                 Image = {
@@ -234,11 +233,17 @@ namespace Oxide.Plugins
             }, "menu_panel", "grid_panel");
 
             //generating vertical lines in grid_panel
+            #region verticals
             linewidth /= 1000;
             var xOffset = (1 / gridscale);
+
             for (int i = 1; i * xOffset < 1; i++)
             {
-
+                PrintToConsole("vertical lines");
+                PrintToConsole(i.ToString());
+                PrintToConsole((i * xOffset + ""));
+                PrintToConsole("start: " + (Math.Round((i * xOffset - linewidth / 2), 3)));
+                PrintToConsole("end  : " + (Math.Round((i * xOffset - linewidth / 2), 3) + linewidth));
 
                 container.Add(new CuiPanel
                 {
@@ -248,24 +253,25 @@ namespace Oxide.Plugins
                 },
                     RectTransform = {
                     AnchorMin = (Math.Round((i*xOffset-linewidth/2),3)+" 0"),
-                    AnchorMax = (Math.Round((i*xOffset+linewidth/2),3)+" 1")
+                    AnchorMax = ( (Math.Round((i*xOffset-linewidth/2),3)+linewidth )+" 1")
                     //AnchorMax = (AnchorMin.x+linewidth)+" 1"
                 },
                 }, "grid_panel", $"vertical_line_{i}");
-
             }
-            //generating horizontal lines in grid_panel
-            Puts("size before: " + container.Count);
+            #endregion
 
-            //horizontals grid
-            linewidth = linewidth * 16 / 9;
+            //generating horizontal lines in grid_panel
+            #region horizontals
+            linewidth = Math.Round(linewidth * 16 / 9, 3); //Round because its multiplied on 16/9
             var yOffset = 1 / gridscale * 16 / 9;
+
             for (int i = 1; i * yOffset < 1; i++) // 16/9 considering aspect ratio 
             {
-                PrintToConsole("horizontals");
+
+                PrintToConsole("horizontal lines");
                 PrintToConsole(i.ToString());
                 PrintToConsole((i * yOffset + ""));
-                PrintToConsole("start: " + (1 - Math.Round((i * yOffset + linewidth / 2), 3)));
+                PrintToConsole("start: " + (1 - (Math.Round((i * yOffset - linewidth / 2), 3) + linewidth)));
                 PrintToConsole("end  : " + (1 - Math.Round((i * yOffset - linewidth / 2), 3)));
 
                 // Puts(i.ToString());
@@ -273,22 +279,22 @@ namespace Oxide.Plugins
                 // Puts(Math.Round((i * yOffset - linewidth / 2), 3) + " 0");
                 // Puts(Math.Round((i * yOffset + linewidth / 2), 3) + " 0");
 
+
                 container.Add(new CuiPanel
                 {
                     Image = {
                     Color = "1 1 1 0.5",
-                    FadeIn = Convert.ToSingle(i * yOffset * 16/9 * 3)
+                    FadeIn = Convert.ToSingle(i * yOffset * 9/16 * 3)
             },
                     RectTransform = {
-                    AnchorMin = "0 "+(Math.Round(1-(i*yOffset+linewidth/2),3)),
+                    AnchorMin = "0 "+(1 - ( Math.Round( (i * yOffset - linewidth / 2)  , 3) + linewidth )),
                     AnchorMax = "1 "+(Math.Round(1-(i*yOffset-linewidth/2),3)) //not reversing Y,it wont make any sence for grid lines
                     //AnchorMax = (AnchorMin.y+linewidth)+" 1"
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
 
             }
-            Puts("size after: " + container.Count);
-
+            #endregion
 
             return container; //returns grid_panel full of grid lines
         }
