@@ -1,5 +1,6 @@
 ﻿using Oxide.Game.Rust.Cui;
 using Oxide.Core.Libraries.Covalence;
+using System;
 
 namespace Oxide.Plugins
 {
@@ -217,7 +218,7 @@ namespace Oxide.Plugins
 
         CuiElementContainer container = new CuiElementContainer();
 
-        CuiElementContainer generate_grid(double gridscale = 12, double linewidth = 3)
+        CuiElementContainer generate_grid(double gridscale = 20, double linewidth = 3)
         {
             //generate panel for grid
             PrintToChat("generating grid");
@@ -233,10 +234,8 @@ namespace Oxide.Plugins
             }, "menu_panel", "grid_panel");
 
             //generating vertical lines in grid_panel
-            PrintToConsole("verticals grid");
-            Puts("verticals grid");
-            linewidth /= 400;
-            var xOffset = System.Math.Round((1 / gridscale), 2);
+            linewidth /= 1000;
+            var xOffset = (1 / gridscale);
             for (int i = 1; i * xOffset < 1; i++)
             {
 
@@ -244,11 +243,12 @@ namespace Oxide.Plugins
                 container.Add(new CuiPanel
                 {
                     Image = {
-                    Color = "1 1 1 0.5"
+                    Color = "1 1 1 0.5",
+                    FadeIn = Convert.ToSingle(i * xOffset * 2)
                 },
                     RectTransform = {
-                    AnchorMin = (System.Math.Round((i*xOffset-linewidth/2),3)+" 0"),
-                    AnchorMax = (System.Math.Round((i*xOffset+linewidth/2),3)+" 1")
+                    AnchorMin = (Math.Round((i*xOffset-linewidth/2),3)+" 0"),
+                    AnchorMax = (Math.Round((i*xOffset+linewidth/2),3)+" 1")
                     //AnchorMax = (AnchorMin.x+linewidth)+" 1"
                 },
                 }, "grid_panel", $"vertical_line_{i}");
@@ -258,27 +258,30 @@ namespace Oxide.Plugins
             Puts("size before: " + container.Count);
 
             //horizontals grid
-            var yOffset = System.Math.Round((1 / gridscale * 16 / 9), 2);
+            linewidth = linewidth * 16 / 9;
+            var yOffset = 1 / gridscale * 16 / 9;
             for (int i = 1; i * yOffset < 1; i++) // 16/9 considering aspect ratio 
             {
+                PrintToConsole("horizontals");
                 PrintToConsole(i.ToString());
-                PrintToConsole((i * xOffset + ""));
-                PrintToConsole(System.Math.Round((i * xOffset - linewidth / 2), 3) + " 0");
-                PrintToConsole(System.Math.Round((i * xOffset + linewidth / 2), 3) + " 0");
+                PrintToConsole((i * yOffset + ""));
+                PrintToConsole("start: " + (1 - Math.Round((i * yOffset + linewidth / 2), 3)));
+                PrintToConsole("end  : " + (1 - Math.Round((i * yOffset - linewidth / 2), 3)));
 
-                Puts(i.ToString());
-                Puts((i * xOffset + ""));
-                Puts(System.Math.Round((i * xOffset - linewidth / 2), 2) + " 0");
-                Puts(System.Math.Round((i * xOffset + linewidth / 2), 2) + " 0");
+                // Puts(i.ToString());
+                // Puts((i * yOffset + ""));
+                // Puts(Math.Round((i * yOffset - linewidth / 2), 3) + " 0");
+                // Puts(Math.Round((i * yOffset + linewidth / 2), 3) + " 0");
 
                 container.Add(new CuiPanel
                 {
                     Image = {
-                    Color = "1 1 1 0.5"
-                },
+                    Color = "1 1 1 0.5",
+                    FadeIn = Convert.ToSingle(i * yOffset * 16/9 * 3)
+            },
                     RectTransform = {
-                    AnchorMin = "0 "+(System.Math.Round((i*yOffset-linewidth/2),2)),
-                    AnchorMax = "1 "+(System.Math.Round((i*yOffset+linewidth/2),2)) //not reversing Y,it wont make any sence for grid lines
+                    AnchorMin = "0 "+(Math.Round(1-(i*yOffset+linewidth/2),3)),
+                    AnchorMax = "1 "+(Math.Round(1-(i*yOffset-linewidth/2),3)) //not reversing Y,it wont make any sence for grid lines
                     //AnchorMax = (AnchorMin.y+linewidth)+" 1"
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
@@ -329,20 +332,21 @@ namespace Oxide.Plugins
                 }
             }, menuPanel, "close_button");
 
+
             var gridButton = container.Add(new CuiButton
             {
                 Button = {
                     Command = "show_grid " + player.userID.ToString(),
                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "0 2 0 0.5"
+                    Color = "0 1 0 0.8"
                 },
                 RectTransform = {
-                    AnchorMin = "0.9 0.05",
-                    AnchorMax = "1 0"
+                    AnchorMin = "0.9 0",
+                    AnchorMax = "1 0.1"
                 },
                 Text = {
                     Text = "Grid",
-                    FontSize = 10,
+                    FontSize = 20,
                     Align = UnityEngine.TextAnchor.MiddleCenter,
                 }
             }, menuPanel, "grid_button");

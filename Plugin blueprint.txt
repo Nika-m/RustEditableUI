@@ -68,3 +68,5 @@ calculateGridPosition(startpos.x startpos.y  width heigth endpos){
 return new float[] { anchorMin.x, anchorMin.y, anchorMax.x, anchorMax.y };
 
 }
+
+added grid panel, but skips some lines, Rounding problem, Y must be reversed, linewidth should be corrected
