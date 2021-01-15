@@ -166,19 +166,23 @@ namespace Oxide.Plugins
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string command, string[] args)
         {
-            switch (args[0]) {
-                case "add":
-                    switch (args[1])
-                    {
-                        case "button":
-                            {
-                                var givenArgs = new Dictionary<string, string>() {
+            if (args.Length > 0)
+            {
+                switch (args[0])
+                {
+                    case "add":
+                        switch (args[1])
+                        {
+                            case "button":
+                                {
+                                    var givenArgs = new Dictionary<string, string>() {
                                     {"xpos","-1"},
                                     {"ypos","-1"},
                                     {"xend","-1"},
                                     {"yend","-1"},
                                     {"width","4"},
                                     {"height","2"},
+                                    {"offset","1"},
                                     {"color","red"},
                                     {"text","default text"},
                                     {"command","chat.say defaultCommand" },
@@ -190,80 +194,106 @@ namespace Oxide.Plugins
                                     endpos:none
                                     */
                                 };
+                                    double xMin, yMin, xMax, yMax;
 
-                                string myArgs = "";
-                                for (int i = 3; i < args.Length; i++) {
-                                    myArgs += $" {args[i]}";
+
+                                    //create string of all values
+                                    string myArgs = "";
+                                    for (int i = 3; i < args.Length; i++)
+                                    {
+                                        myArgs += $" {args[i]}";
+                                    }
+
+                                    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                                    PrintToConsole("values string created: " + myArgs);
+
+                                    //find all key:value in myArgs and add them in dictionary;
+                                    //menu add button color:green                   askAviability w/h
+                                    //menu add button xpos:4 ypos:5 
+                                    //menu add button xpos:4 ypos:5 width:4 higth:2
+                                    //menu add button width:4 heigth:2              askAviability w/h
+                                    //??? menu add button xend:10 yend:10           askAviability ???
+                                    string key, value;
+                                    for (int i = 3; i < args.Length; i++)
+                                    {
+                                        key = args[i].Substring(0, args[i].IndexOf(":"));
+                                        value = args[i].Substring(args[i].IndexOf(":") + 1);
+                                        //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                                        PrintToConsole($"got key: {key} and values: {value}");
+
+                                        givenArgs.Add(key, value);
+                                    }
+
+                                    //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                                    PrintToConsole("pringing dictionary");
+                                    foreach (KeyValuePair<string, string> prop in givenArgs)
+                                    {
+                                        PrintToConsole($"Key: {prop.Key} Value: {prop.Value}");
+                                    }
+
+                                    /* more complicated way
+                                    string slice = myArgs.Substring(0, myArgs.IndexOf(":",i));
+                                    string key = slice.Substring(slice.LastIndexOf(" "), slice.Length - slice.LastIndexOf(" "));
+                                    string slice2 = myArgs.Substring(0, myArgs.IndexOf(":", i+1));
+                                    string value = 
+                                    */
+
+                                    //implement all dictionary key:values
+                                    int xPos = Convert.ToInt16(givenArgs["xpos"]);
+                                    int yPos = Convert.ToInt16(givenArgs["ypos"]);
+                                    int width = Convert.ToInt16(givenArgs["width"]);
+                                    int height = Convert.ToInt16(givenArgs["height"]);
+                                    string color = givenArgs["color"];
+                                    string text = givenArgs["text"];
+                                    string bcommand = givenArgs["command"];
+                                    string autoclose = givenArgs["autoclose"];
+                                    int offset = Convert.ToInt16(givenArgs["offset"]);
+                                    /*
+                                    startpos: left top aviable cell, offseted 1 cell 
+                                    width:4
+                                    height:2
+                                    endpos:none 
+                                     */
+
+
+
+
+                                    // search should start from 0 0 and xPos yPos should be returned from aviability
+                                    if (xPos == -1)
+                                    {
+                                        double[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
+                                                                                                //get xPos yPos xEnd yEnd or "cantfit"
+                                        xMin = getPos[0] * 1 / 12;           //*xOffset 
+                                        yMin = getPos[1] * 1 / 12 * 16 / 9;     //*yOffset
+                                        xMax = getPos[2] * 1 / 12;
+                                        yMax = getPos[3] * 1 / 12 * 16 / 9;
+
+                                        //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                                        PrintToConsole("pirvlei shedegi");
+                                        PrintToConsole($"xMin: {xMin} yMin: {xMin} xMax: {xMax} yMax: {yMax}");
+                                    }
+                                    else
+                                    {
+                                        //update Aviability with xPos yPos xEnd yEnd
+
+                                    }
+
+                                    //draw it 
+                                    //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
+
                                 }
+                                break;
+                            case "text":
+                                //adding textfunctionality
+                                break;
+                        }
+                        break;
 
-                                //find all key:value in myArgs and add them in dictionary;
-                                //menu add button color:green                   askAviability w/h
-                                //menu add button xpos:4 ypos:5 
-                                //menu add button xpos:4 ypos:5 width:4 higth:2
-                                //menu add button width:4 heigth:2              askAviability w/h
-                                //??? menu add button xend:10 yend:10           askAviability ???
-                                string key, value;
-                                for (int i = 3; i < args.Length; i++)
-                                {
-                                    key = args[i].Substring(0, args[i].IndexOf(":"));
-                                    value = args[i].Substring(args[i].IndexOf(":") + 1);
-                                    givenArgs.Add(key, value);
-                                }
-                                /* more complicated way
-                                string slice = myArgs.Substring(0, myArgs.IndexOf(":",i));
-                                string key = slice.Substring(slice.LastIndexOf(" "), slice.Length - slice.LastIndexOf(" "));
-                                string slice2 = myArgs.Substring(0, myArgs.IndexOf(":", i+1));
-                                string value = 
-                                */
+                    case "remove":
+                        //remove functionality
 
-                                //implement all dictionary key:values
-                                int xPos = Convert.ToInt16(givenArgs["xpos"]);
-                                int yPos = Convert.ToInt16(givenArgs["ypos"]);
-                                string color = givenArgs["color"];
-                                string text = givenArgs["text"];
-                                string bcommand = givenArgs["command"];
-                                string autoclose = givenArgs["autoclose"];
-                                /*
-                                startpos: left top aviable cell, offseted 1 cell 
-                                width:4
-                                height:2
-                                endpos:none 
-                                 */
-
-
-
-
-                                // search should start from 0 0 and xPos yPos should be returned from aviability
-                                if (xPos == -1)
-                                {
-                                   double getPos = askAviability(width, height); //send width/height  ?...endpos
-                                                                                 //get xPos yPos xEnd yEnd or "cantfit"
-                                    xPos = getPos[0];
-                                    yPos = getPos[1];
-                                    xEnd = getPos[2];
-                                    yEnd = getPos[3];
-                                }
-                                else
-                                {
-                                    //update Aviability with xPos yPos xEnd yEnd
-
-                                }
-
-                                //draw it 
-                                //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
-
-                            }
-                            break;
-                        case "text":
-                            //adding textfunctionality
-                            break;
-                    }
-                    break;
-
-                case "remove":
-                    //remove functionality
-
-                    break;
+                        break;
+                }
             }
             CuiHelper.DestroyUi(player, "menu_panel");
             CuiElementContainer menu = generate_menu(player);
@@ -299,6 +329,7 @@ namespace Oxide.Plugins
                 PrintToChat("player is null");
                 return;
             }
+            CuiHelper.DestroyUi(player, "grid_panel");
             CuiHelper.DestroyUi(player, "menu_panel");
         }
 
@@ -312,58 +343,106 @@ namespace Oxide.Plugins
             //if (player == null)
             //   return;
             //CuiHelper.DestroyUi(player, "menu_panel");
-            CuiElementContainer menuWithGrid = generate_grid();
+            CuiElementContainer menuWithGrid = generate_grid(player);
             PrintToChat("imin");
             CuiHelper.AddUi(player, menuWithGrid);
 
         }
 
 
-
+        static class Globals
+        {
+            public static Boolean[,] aviabilityMatrix;
+        }
 
         #region aviability
-        
 
-        private void createAviability(int x, int y) {
+        public void createAviability(int x, int y)
+        {
 
-            Boolean[,] aviabilityMatrix = new Boolean[x, y]; //global
+            Globals.aviabilityMatrix = new Boolean[x, y]; //global
+                                                          /*
+                                                          for (int i = 0; i < x; i++) {
+                                                              for (int j = 0; j < y; j++) {
 
-            for (int i = 0; i < x; i++) {
-                for (int j = 0; j < y; j++) {
+                                                              }
+                                                          }
+                                                          */
 
-                }
-            }
-            
         }
-        private double[] askAviability(int width, int height) {
+        private double[] askAviability(int width, int height, int offset)
+        {
             //calculate width and height of button (matrixuli zomebi)
-            double xPos, yPos, xEnd, yEnd;
-            int isBusy;
+            double xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
+            int hopY = 0;
+            Boolean success;
+            Boolean firstXcolSuccess = false;
+            Boolean isOpen = true;
             //find aviable position
-            for (int x = 0; x < aviabilityMatrix.length; x++)
+            for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++)
             {
-                for (int y = 0; y < aviabilityMatrix.heigth; y++)
+                //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                PrintToConsole("matrix width: " + Globals.aviabilityMatrix.GetLength(0));
+                for (int y = 0; y < Globals.aviabilityMatrix.GetLength(1); y++)
                 {
-                    //check if all button space is free in matrix with 1 block offset outline
-                    for (int btnX = -1; btnX <= width + 1; btnX++) { 
-                        for (int btnY = -1; btnY <= height + 1; btnY++) { 
-                            isBusy += aviabilityMatrix[btnX, btnY];
+                    //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                    PrintToConsole("matrix height: " + Globals.aviabilityMatrix.GetLength(1));
+                    //2nd iteration: y is hopped now  y+=hopY
+                    if (offset > 0 && isOpen)
+                    {
+                        x = offset;
+                        y = offset;
+                        isOpen = false;
+
+                    }
+                    success = true;//hopes it finds space
+                    //check if all button space + offset is free in matrix
+                    for (int btnX = x - offset; btnX <= x + width + offset; btnX++)
+                    {
+                        for (int btnY = y - offset; btnY <= y + height + offset; btnY++)
+                        {
+                            if (Globals.aviabilityMatrix[btnX, btnY])
+                            {
+                                hopY += 1;
+                            };
+                        }
+                        if (hopY > 0)
+                        {
+                            y += hopY + offset; //maybe offset is needed
+                            hopY = 0;
+                            success = false;
+                            break; //goes ouf of the current loop
                         }
                     }
-                    if (isBusy == 0) {
-                        //calculate correct values using gridscale
-                        //an ise iyos ro matrica igebdes matricul width height da abrunebdes matricul koordinatebs
-                        //da am koordinatebis konvertacia gridscale it garet xdebodes
-                        //xPos = x yPos = y xEnd = x*width yEnd = y*heigth
-                        // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
-                        // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
-                        // pizdec
+                    if (success)
+                    {
+                        xPos = x;             //xMin
+                        yPos = y + height;    //yMin
+                        xEnd = x + width;
+                        yEnd = y;
+                        firstXcolSuccess = true;
+                        break;
                     }
+                    //here we go after BREAK
+
+                    //calculate correct values using gridscale
+                    //an ise iyos ro matrica igebdes matricul width height da abrunebdes matricul koordinatebs
+                    //da am koordinatebis konvertacia gridscale it garet xdebodes
+                    //xPos = x yPos = y xEnd = x*width yEnd = y*heigth
+                    // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
+                    // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
+                    // pizdec
+                }
+                if (firstXcolSuccess)
+                {
+                    PrintToChat("gilocav, maladec");
+                    break;
+
                 }
             }
 
 
-            return [xPos, yPos, xEnd, yEnd];
+            return new double[4] { xPos, yPos, xEnd, yEnd }; //double array with size of 4;
         }
 
         #endregion
@@ -373,7 +452,7 @@ namespace Oxide.Plugins
 
         CuiElementContainer container = new CuiElementContainer(); //global
 
-        CuiElementContainer generate_grid(double gridscale = 20, double linewidth = 1)
+        CuiElementContainer generate_grid(BasePlayer player, double gridscale = 12, double linewidth = 1)
         {
             int x = 0;
             int y = 0;
@@ -454,7 +533,29 @@ namespace Oxide.Plugins
                 }, "grid_panel", $"horizontal_line_{i}");
 
                 createAviability(x, y); //it shouldnot be created here
+                //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                PrintToConsole("" + Globals.aviabilityMatrix[3, 0]);
             }
+            #endregion
+
+            #region tempButton
+            var closeButton2 = container.Add(new CuiButton
+            {
+                Button = {
+                    Command = "menu_close " + player.userID.ToString(),
+                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                    Color = "1 0 1 0.8"
+                },
+                RectTransform = {
+                    AnchorMin = "0.9 0.95",
+                    AnchorMax = "1 1"
+                },
+                Text = {
+                    Text = "X",
+                    FontSize = 10,
+                    Align = UnityEngine.TextAnchor.MiddleCenter,
+                }
+            }, gridPanel, "close_grid");
             #endregion
 
             return container; //returns grid_panel full of grid lines
@@ -515,7 +616,8 @@ namespace Oxide.Plugins
                     Text = "Grid",
                     FontSize = 20,
                     Align = UnityEngine.TextAnchor.MiddleCenter,
-                }
+                },
+
             }, menuPanel, "grid_button");
 
             //var blurredElement = new CuiElement 
