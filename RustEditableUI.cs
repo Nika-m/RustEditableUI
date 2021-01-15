@@ -1,6 +1,7 @@
 ﻿using Oxide.Game.Rust.Cui;
 using Oxide.Core.Libraries.Covalence;
 using System;
+using System.Collections.Generic;
 
 namespace Oxide.Plugins
 {
@@ -165,10 +166,111 @@ namespace Oxide.Plugins
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string command, string[] args)
         {
+            switch (args[0]) {
+                case "add":
+                    switch (args[1])
+                    {
+                        case "button":
+                            {
+                                var givenArgs = new Dictionary<string, string>() {
+                                    {"xpos","-1"},
+                                    {"ypos","-1"},
+                                    {"xend","-1"},
+                                    {"yend","-1"},
+                                    {"width","4"},
+                                    {"height","2"},
+                                    {"color","red"},
+                                    {"text","default text"},
+                                    {"command","chat.say defaultCommand" },
+                                    {"autoclose","false"}
+                                    /*
+                                    startpos: left top aviable cell, offseted 1 cell 
+                                    width:4
+                                    height:2
+                                    endpos:none
+                                    */
+                                };
+
+                                string myArgs = "";
+                                for (int i = 3; i < args.Length; i++) {
+                                    myArgs += $" {args[i]}";
+                                }
+
+                                //find all key:value in myArgs and add them in dictionary;
+                                //menu add button color:green                   askAviability w/h
+                                //menu add button xpos:4 ypos:5 
+                                //menu add button xpos:4 ypos:5 width:4 higth:2
+                                //menu add button width:4 heigth:2              askAviability w/h
+                                //??? menu add button xend:10 yend:10           askAviability ???
+                                string key, value;
+                                for (int i = 3; i < args.Length; i++)
+                                {
+                                    key = args[i].Substring(0, args[i].IndexOf(":"));
+                                    value = args[i].Substring(args[i].IndexOf(":") + 1);
+                                    givenArgs.Add(key, value);
+                                }
+                                /* more complicated way
+                                string slice = myArgs.Substring(0, myArgs.IndexOf(":",i));
+                                string key = slice.Substring(slice.LastIndexOf(" "), slice.Length - slice.LastIndexOf(" "));
+                                string slice2 = myArgs.Substring(0, myArgs.IndexOf(":", i+1));
+                                string value = 
+                                */
+
+                                //implement all dictionary key:values
+                                int xPos = Convert.ToInt16(givenArgs["xpos"]);
+                                int yPos = Convert.ToInt16(givenArgs["ypos"]);
+                                string color = givenArgs["color"];
+                                string text = givenArgs["text"];
+                                string bcommand = givenArgs["command"];
+                                string autoclose = givenArgs["autoclose"];
+                                /*
+                                startpos: left top aviable cell, offseted 1 cell 
+                                width:4
+                                height:2
+                                endpos:none 
+                                 */
+
+
+
+
+                                // search should start from 0 0 and xPos yPos should be returned from aviability
+                                if (xPos == -1)
+                                {
+                                   double getPos = askAviability(width, height); //send width/height  ?...endpos
+                                                                                 //get xPos yPos xEnd yEnd or "cantfit"
+                                    xPos = getPos[0];
+                                    yPos = getPos[1];
+                                    xEnd = getPos[2];
+                                    yEnd = getPos[3];
+                                }
+                                else
+                                {
+                                    //update Aviability with xPos yPos xEnd yEnd
+
+                                }
+
+                                //draw it 
+                                //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
+
+                            }
+                            break;
+                        case "text":
+                            //adding textfunctionality
+                            break;
+                    }
+                    break;
+
+                case "remove":
+                    //remove functionality
+
+                    break;
+            }
             CuiHelper.DestroyUi(player, "menu_panel");
             CuiElementContainer menu = generate_menu(player);
             CuiHelper.AddUi(player, menu);
         }
+
+
         #endregion
 
         #region ConsoleCommands
@@ -199,6 +301,7 @@ namespace Oxide.Plugins
             }
             CuiHelper.DestroyUi(player, "menu_panel");
         }
+
         [ConsoleCommand("show_grid")]
         private void cmd_showGrid(ConsoleSystem.Arg Args)
         {
@@ -214,12 +317,66 @@ namespace Oxide.Plugins
             CuiHelper.AddUi(player, menuWithGrid);
 
         }
+
+
+
+
+        #region aviability
+        
+
+        private void createAviability(int x, int y) {
+
+            Boolean[,] aviabilityMatrix = new Boolean[x, y]; //global
+
+            for (int i = 0; i < x; i++) {
+                for (int j = 0; j < y; j++) {
+
+                }
+            }
+            
+        }
+        private double[] askAviability(int width, int height) {
+            //calculate width and height of button (matrixuli zomebi)
+            double xPos, yPos, xEnd, yEnd;
+            int isBusy;
+            //find aviable position
+            for (int x = 0; x < aviabilityMatrix.length; x++)
+            {
+                for (int y = 0; y < aviabilityMatrix.heigth; y++)
+                {
+                    //check if all button space is free in matrix with 1 block offset outline
+                    for (int btnX = -1; btnX <= width + 1; btnX++) { 
+                        for (int btnY = -1; btnY <= height + 1; btnY++) { 
+                            isBusy += aviabilityMatrix[btnX, btnY];
+                        }
+                    }
+                    if (isBusy == 0) {
+                        //calculate correct values using gridscale
+                        //an ise iyos ro matrica igebdes matricul width height da abrunebdes matricul koordinatebs
+                        //da am koordinatebis konvertacia gridscale it garet xdebodes
+                        //xPos = x yPos = y xEnd = x*width yEnd = y*heigth
+                        // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
+                        // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
+                        // pizdec
+                    }
+                }
+            }
+
+
+            return [xPos, yPos, xEnd, yEnd];
+        }
+
         #endregion
 
-        CuiElementContainer container = new CuiElementContainer();
+        #endregion
+
+
+        CuiElementContainer container = new CuiElementContainer(); //global
 
         CuiElementContainer generate_grid(double gridscale = 20, double linewidth = 1)
         {
+            int x = 0;
+            int y = 0;
             //generate panel for grid
             var gridPanel = container.Add(new CuiPanel
             {
@@ -244,6 +401,8 @@ namespace Oxide.Plugins
                 PrintToConsole((i * xOffset + ""));
                 PrintToConsole("start: " + (Math.Round((i * xOffset - linewidth / 2), 3)));
                 PrintToConsole("end  : " + (Math.Round((i * xOffset - linewidth / 2), 3) + linewidth));
+
+                x += 1;
 
                 container.Add(new CuiPanel
                 {
@@ -279,6 +438,7 @@ namespace Oxide.Plugins
                 // Puts(Math.Round((i * yOffset - linewidth / 2), 3) + " 0");
                 // Puts(Math.Round((i * yOffset + linewidth / 2), 3) + " 0");
 
+                y += 1;
 
                 container.Add(new CuiPanel
                 {
@@ -293,6 +453,7 @@ namespace Oxide.Plugins
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
 
+                createAviability(x, y); //it shouldnot be created here
             }
             #endregion
 
