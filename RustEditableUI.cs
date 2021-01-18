@@ -174,10 +174,28 @@ namespace Oxide.Plugins
             {"blue",  "0 0 1 1" }
         };
 
+        static class Globals
+        {
+            public static Boolean[,] aviabilityMatrix;
+
+        }
+
         Boolean menuIsOpen = false;
         Boolean gridIsOpen = false;
         Boolean menuIsCreated = false;
         Boolean gridIsCreated = false;
+
+        [ChatCommand("matrixShow")]
+        private void chatCommand_matrixShow(BasePlayer player, string command, string[] args)
+        {
+            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is {Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
+        }
+        [ChatCommand("matrixSet")]
+        private void chatCommand_matrixSet(BasePlayer player, string command, string[] args)
+        {
+            Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])] = Convert.ToBoolean(args[2]);
+            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is set to {Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
+        }
 
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string command, string[] args)
@@ -411,6 +429,7 @@ namespace Oxide.Plugins
                 if (!gridIsCreated)
                 {
                     generate_grid(player);
+                    gridIsCreated = true;
                 }
                 CuiHelper.DestroyUi(player, "menu_panel");
                 CuiHelper.AddUi(player, container);
@@ -420,11 +439,7 @@ namespace Oxide.Plugins
         }
 
 
-        static class Globals
-        {
-            public static Boolean[,] aviabilityMatrix;
 
-        }
 
         #region aviability
 
@@ -445,9 +460,9 @@ namespace Oxide.Plugins
         {
             //calculate width and height of button (matrixuli zomebi)
             double xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
-            Globals.aviabilityMatrix[5, 1] = true;
-            Globals.aviabilityMatrix[5, 2] = true;
-            Globals.aviabilityMatrix[5, 3] = true;
+            Globals.aviabilityMatrix[6, 0] = true;
+            Globals.aviabilityMatrix[6, 1] = true;
+            Globals.aviabilityMatrix[6, 2] = true;
             int hopY = 0;
             Boolean success;
             Boolean firstXcolSuccess = false;
@@ -456,10 +471,12 @@ namespace Oxide.Plugins
             for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++)
             {
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                PrintToConsole($"x: {x}");
                 PrintToConsole("matrix width: " + Globals.aviabilityMatrix.GetLength(0));
                 for (int y = 0; y < Globals.aviabilityMatrix.GetLength(1); y++)
                 {
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                    PrintToConsole($"y: {y}");
                     PrintToConsole("matrix height: " + Globals.aviabilityMatrix.GetLength(1));
                     //2nd iteration: y is hopped now  y+=hopY
                     if (offset > 0 && isOpen)
@@ -467,31 +484,44 @@ namespace Oxide.Plugins
                         x = offset;
                         y = offset;
                         isOpen = false;
-                        PrintToConsole("came in");
+                        PrintToConsole($"setting offset y: {y} x: {x}");
 
                     }
                     success = true;//hopes it finds space
                     //check if all button space + offset is free in matrix
+                    //takes x,y position and checks space around that position
+                    //breaks if finds any nonAviable Position and returns Success = false, and next y position
+                    //if everything is Aviable returns Success = true
+                    PrintToConsole($"checkPoint Y iteration: {y}");
                     for (int btnX = x - offset; btnX <= x + width + offset; btnX++)
                     {
+                        PrintToConsole($"checkSpace X iteration: {btnX}");
                         for (int btnY = y - offset; btnY < y + height + offset; btnY++)
                         {
                             PrintToConsole($"offset: {offset} \n btnX: {btnX}  btnY: {btnY}");
+
                             if (Globals.aviabilityMatrix[btnX, btnY])
                             {
+                                PrintToConsole($"btnX: {btnX} btnY {btnY}");
                                 hopY += 1;
+                                PrintToConsole($"hopY: {hopY}");
                             };
                         }
                         if (hopY > 0)
                         {
-                            y += hopY + offset; //maybe offset is needed
+                            y += hopY - 1; //-1 because of y++ in for loop, 
+                                           //offset igulisxmeba ukve shen agaru unda miumato 
+                                           //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+                            PrintToConsole($"hop {hopY} y: {y}");
                             hopY = 0;
                             success = false;
                             break; //goes ouf of the current loop
                         }
                     }
+
                     if (success)
                     {
+
                         xPos = x;             //xMin
                         yPos = y + height;    //yMin
                         xEnd = x + width;
@@ -508,6 +538,7 @@ namespace Oxide.Plugins
                     // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
                     // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
                     // pizdec
+                    PrintToConsole($"checking y: {y}");
                 }
                 if (firstXcolSuccess)
                 {
@@ -601,7 +632,7 @@ namespace Oxide.Plugins
                 },
                 }, "grid_panel", $"horizontal_line_{i}");
 
-                createAviability(x, y); //it shouldnot be created here
+                createAviability(x + 1, y + 1); //it shouldnot be created here
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 PrintToConsole("" + Globals.aviabilityMatrix[3, 0]);
             }
@@ -715,4 +746,3 @@ namespace Oxide.Plugins
 
 
 }
-
