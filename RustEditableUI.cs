@@ -295,15 +295,15 @@ namespace Oxide.Plugins
                                     // search should start from 0 0 and xPos yPos should be returned from aviability
                                     if (xPos == -1)
                                     {
-                                        double[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
-                                                                                                //get xPos yPos xEnd yEnd or "cantfit"
+                                        int[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
+                                                                                             //get xPos yPos xEnd yEnd or "cantfit"
 
                                         PrintToConsole($"xMin: {getPos[0]} yMin: {getPos[1]} xMax: {getPos[2]} yMax: {getPos[3]}");
 
-                                        xMin = Math.Round((getPos[0] * 1 / 12), 3);           //*xOffset 
-                                        yMin = Math.Round((1 - (getPos[1] * 1 / 12 * 16 / 9)), 3);     //*yOffset
-                                        xMax = Math.Round((getPos[2] * 1 / 12), 3);
-                                        yMax = Math.Round((1 - (getPos[3] * 1 / 12 * 16 / 9)), 3);
+                                        xMin = Math.Round((Convert.ToDouble(getPos[0]) * 1 / 12), 3);           //*xOffset 
+                                        yMin = Math.Round((1 - (Convert.ToDouble(getPos[1]) * 1 / 12 * 16 / 9)), 3);     //*yOffset
+                                        xMax = Math.Round((Convert.ToDouble(getPos[2]) * 1 / 12), 3);
+                                        yMax = Math.Round((1 - (Convert.ToDouble(getPos[3]) * 1 / 12 * 16 / 9)), 3);
 
 
                                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -456,10 +456,10 @@ namespace Oxide.Plugins
                                                           */
 
         }
-        private double[] askAviability(int width, int height, int offset)
+        private int[] askAviability(int width, int height, int offset)
         {
             //calculate width and height of button (matrixuli zomebi)
-            double xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
+            int xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
             Globals.aviabilityMatrix[6, 0] = true;
             Globals.aviabilityMatrix[6, 1] = true;
             Globals.aviabilityMatrix[6, 2] = true;
@@ -526,6 +526,17 @@ namespace Oxide.Plugins
                         yPos = y + height;    //yMin
                         xEnd = x + width;
                         yEnd = y;
+
+                        //update matrix
+                        PrintToChat($"xMin: {xPos} yMin: {yPos} xMax: {xEnd} yMax {yEnd}");
+                        for (int matrixPosX = xPos; matrixPosX < xEnd; matrixPosX++)
+                        {
+                            for (int matrixPosY = yEnd; matrixPosY < yPos; matrixPosY++) //yEnd yPos reversed, because matrix Y is reversed
+                            {
+                                Globals.aviabilityMatrix[matrixPosX, matrixPosY] = true;
+                            }
+                        }
+
                         firstXcolSuccess = true;
                         break;
                     }
@@ -549,7 +560,7 @@ namespace Oxide.Plugins
             }
 
 
-            return new double[4] { xPos, yPos, xEnd, yEnd }; //double array with size of 4;
+            return new int[4] { xPos, yPos, xEnd, yEnd }; //double array with size of 4;
         }
 
         #endregion
