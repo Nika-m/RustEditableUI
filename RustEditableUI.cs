@@ -164,6 +164,16 @@ namespace Oxide.Plugins
             // Server.Command(string.Format("env.time {0}", 24);
         }
 
+        private Dictionary<string, string> ColorLib = new Dictionary<string, string>
+        {
+            {"transparent", "0 0 0 0" },
+            {"black", "0 0 0 1" },
+            {"white", "1 1 1 1" },
+            {"red",   "1 0 0 1" },
+            {"green", "0 1 0 1" },
+            {"blue",  "0 0 1 1" }
+        };
+
         Boolean menuIsOpen = false;
         Boolean gridIsOpen = false;
         Boolean menuIsCreated = false;
@@ -249,10 +259,10 @@ namespace Oxide.Plugins
                                     int yPos = Convert.ToInt16(givenArgs["ypos"]);
                                     int width = Convert.ToInt16(givenArgs["width"]);
                                     int height = Convert.ToInt16(givenArgs["height"]);
-                                    string color = givenArgs["color"];
+                                    string color = ColorLib[givenArgs["color"]];
                                     string text = givenArgs["text"];
                                     string buttonCommand = givenArgs["command"];
-                                    string autoclose = givenArgs["autoclose"];
+                                    string autoclose = givenArgs["autoclose"];    //not connected yet
                                     int offset = Convert.ToInt16(givenArgs["offset"]);
                                     /*
                                     startpos: left top aviable cell, offseted 1 cell 
@@ -294,14 +304,14 @@ namespace Oxide.Plugins
                                         Button = {
                                             Command = buttonCommand,
                                             //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                                            Color = "1 0 1 1"
+                                            Color = color
                                         },
                                         RectTransform = {
                                             AnchorMin = $"{xMin} {yMin}",
                                             AnchorMax = $"{xMax} {yMax}"
                                         },
                                         Text = {
-                                            Text = "comeooon",
+                                            Text = text,
                                             FontSize = 30,
                                             Align = UnityEngine.TextAnchor.MiddleCenter,
                                         }
@@ -413,6 +423,7 @@ namespace Oxide.Plugins
         static class Globals
         {
             public static Boolean[,] aviabilityMatrix;
+
         }
 
         #region aviability
@@ -434,6 +445,9 @@ namespace Oxide.Plugins
         {
             //calculate width and height of button (matrixuli zomebi)
             double xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
+            Globals.aviabilityMatrix[5, 1] = true;
+            Globals.aviabilityMatrix[5, 2] = true;
+            Globals.aviabilityMatrix[5, 3] = true;
             int hopY = 0;
             Boolean success;
             Boolean firstXcolSuccess = false;
@@ -453,14 +467,16 @@ namespace Oxide.Plugins
                         x = offset;
                         y = offset;
                         isOpen = false;
+                        PrintToConsole("came in");
 
                     }
                     success = true;//hopes it finds space
                     //check if all button space + offset is free in matrix
                     for (int btnX = x - offset; btnX <= x + width + offset; btnX++)
                     {
-                        for (int btnY = y - offset; btnY <= y + height + offset; btnY++)
+                        for (int btnY = y - offset; btnY < y + height + offset; btnY++)
                         {
+                            PrintToConsole($"offset: {offset} \n btnX: {btnX}  btnY: {btnY}");
                             if (Globals.aviabilityMatrix[btnX, btnY])
                             {
                                 hopY += 1;
