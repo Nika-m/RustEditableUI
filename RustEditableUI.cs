@@ -148,6 +148,7 @@ namespace Oxide.Plugins
         #endregion
 
         #region ChatCommands
+        CuiElementContainer container = new CuiElementContainer(); //global
 
         [ChatCommand("check")]
         private void chatCommand_check(BasePlayer player, string command, string[] args)
@@ -162,6 +163,11 @@ namespace Oxide.Plugins
             //player.GiveItem(item);
             // Server.Command(string.Format("env.time {0}", 24);
         }
+
+        Boolean menuIsOpen = false;
+        Boolean gridIsOpen = false;
+        Boolean menuIsCreated = false;
+        Boolean gridIsCreated = false;
 
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string command, string[] args)
@@ -194,7 +200,7 @@ namespace Oxide.Plugins
                                     endpos:none
                                     */
                                 };
-                                    double xMin, yMin, xMax, yMax;
+                                    double xMin = 0, yMin = 0, xMax = 0, yMax = 0;
 
 
                                     //create string of all values
@@ -263,10 +269,11 @@ namespace Oxide.Plugins
                                     {
                                         double[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
                                                                                                 //get xPos yPos xEnd yEnd or "cantfit"
-                                        xMin = getPos[0] * 1 / 12;           //*xOffset 
-                                        yMin = getPos[1] * 1 / 12 * 16 / 9;     //*yOffset
-                                        xMax = getPos[2] * 1 / 12;
-                                        yMax = getPos[3] * 1 / 12 * 16 / 9;
+                                        xMin = Math.Round((getPos[0] * 1 / 12), 3);           //*xOffset 
+                                        yMin = Math.Round((getPos[1] * 1 / 12 * 16 / 9), 3);     //*yOffset
+                                        xMax = Math.Round((getPos[2] * 1 / 12), 3);
+                                        yMax = Math.Round((getPos[3] * 1 / 12 * 16 / 9), 3);
+
 
                                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                         PrintToConsole("pirvlei shedegi");
@@ -279,6 +286,25 @@ namespace Oxide.Plugins
                                     }
 
                                     //draw it 
+                                    var drawButton = container.Add(new CuiButton
+                                    {
+                                        Button = {
+                                            Command = "draw_button " + player.userID.ToString(),
+                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                            Color = "1 0 1 0.8"
+                                        },
+                                        RectTransform = {
+                                            AnchorMin = $"{xMin} {yMin}",
+                                            AnchorMax = $"{xMax} {yMax}"
+                                        },
+                                        Text = {
+                                            Text = "comeooon",
+                                            FontSize = 30,
+                                            Align = UnityEngine.TextAnchor.MiddleCenter,
+                                        }
+                                    }, "grid_panel", "draw_button");
+
+                                    CuiHelper.AddUi(player, drawButton);
                                     //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
 
                                 }
@@ -295,9 +321,28 @@ namespace Oxide.Plugins
                         break;
                 }
             }
-            CuiHelper.DestroyUi(player, "menu_panel");
-            CuiElementContainer menu = generate_menu(player);
-            CuiHelper.AddUi(player, menu);
+
+            if (menuIsOpen)
+            {
+                CuiHelper.DestroyUi(player, "menu_panel");
+                menuIsOpen = false;
+            }
+            else
+            {
+                if (!menuIsCreated)
+                {
+                    generate_menu(player);
+                    menuIsCreated = true;
+                }
+                CuiHelper.AddUi(player, container);
+                if (!gridIsOpen)
+                {
+                    CuiHelper.DestroyUi(player, "grid_panel");
+                }
+                menuIsOpen = true;
+            }
+
+
         }
 
 
@@ -329,8 +374,8 @@ namespace Oxide.Plugins
                 PrintToChat("player is null");
                 return;
             }
-            CuiHelper.DestroyUi(player, "grid_panel");
             CuiHelper.DestroyUi(player, "menu_panel");
+            menuIsOpen = false;
         }
 
         [ConsoleCommand("show_grid")]
@@ -343,9 +388,22 @@ namespace Oxide.Plugins
             //if (player == null)
             //   return;
             //CuiHelper.DestroyUi(player, "menu_panel");
-            CuiElementContainer menuWithGrid = generate_grid(player);
-            PrintToChat("imin");
-            CuiHelper.AddUi(player, menuWithGrid);
+            if (gridIsOpen)
+            {
+                //hide gridPanel from container
+                CuiHelper.DestroyUi(player, "grid_panel");
+                gridIsOpen = false;
+            }
+            else
+            {
+                if (!gridIsCreated)
+                {
+                    generate_grid(player);
+                }
+                CuiHelper.DestroyUi(player, "menu_panel");
+                CuiHelper.AddUi(player, container);
+                gridIsOpen = true;
+            }
 
         }
 
@@ -450,23 +508,14 @@ namespace Oxide.Plugins
         #endregion
 
 
-        CuiElementContainer container = new CuiElementContainer(); //global
 
-        CuiElementContainer generate_grid(BasePlayer player, double gridscale = 12, double linewidth = 1)
+
+        void generate_grid(BasePlayer player, double gridscale = 12, double linewidth = 1)
         {
             int x = 0;
             int y = 0;
             //generate panel for grid
-            var gridPanel = container.Add(new CuiPanel
-            {
-                Image = {
-                    Color = "0 0 0 0" //fully transparent
-                },
-                RectTransform = {
-                    AnchorMin = "0 0",
-                    AnchorMax = "1 1"
-                },
-            }, "menu_panel", "grid_panel");
+
 
             //generating vertical lines in grid_panel
             #region verticals
@@ -488,6 +537,7 @@ namespace Oxide.Plugins
                     Image = {
                     Color = "1 1 1 0.5",
                     FadeIn = Convert.ToSingle(i * xOffset * 2)
+                   // FadeOut = Convert.ToSingle(i * xOffset * 2)
                 },
                     RectTransform = {
                     AnchorMin = (Math.Round((i*xOffset-linewidth/2),3)+" 0"),
@@ -524,6 +574,7 @@ namespace Oxide.Plugins
                     Image = {
                     Color = "1 1 1 0.5",
                     FadeIn = Convert.ToSingle(i * yOffset * 9/16 * 3)
+                    //FadeOut = Convert.ToSingle(i * yOffset * 9/16 * 3)
             },
                     RectTransform = {
                     AnchorMin = "0 "+(1 - ( Math.Round( (i * yOffset - linewidth / 2)  , 3) + linewidth )),
@@ -538,35 +589,16 @@ namespace Oxide.Plugins
             }
             #endregion
 
-            #region tempButton
-            var closeButton2 = container.Add(new CuiButton
-            {
-                Button = {
-                    Command = "menu_close " + player.userID.ToString(),
-                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "1 0 1 0.8"
-                },
-                RectTransform = {
-                    AnchorMin = "0.9 0.95",
-                    AnchorMax = "1 1"
-                },
-                Text = {
-                    Text = "X",
-                    FontSize = 10,
-                    Align = UnityEngine.TextAnchor.MiddleCenter,
-                }
-            }, gridPanel, "close_grid");
-            #endregion
-
-            return container; //returns grid_panel full of grid lines
         }
 
 
         //clickable argument in command
-        CuiElementContainer generate_menu(BasePlayer player)
+        void generate_menu(BasePlayer player)
         {
 
             //var container = new CuiElementContainer();
+
+
 
             var menuPanel = container.Add(new CuiPanel
             {
@@ -581,6 +613,23 @@ namespace Oxide.Plugins
 
 
             }, "Hud", "menu_panel");
+            PrintToConsole("created menu");
+
+            //========================================================================
+            var gridPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                    Color = "0 0 0 0" //fully transparent
+                },
+                RectTransform = {
+                    AnchorMin = "0 0",
+                    AnchorMax = "1 1"
+                },
+            }, "menu_panel", "grid_panel");
+
+            //========================================================================
+
+            //
 
             var closeButton = container.Add(new CuiButton
             {
@@ -630,8 +679,6 @@ namespace Oxide.Plugins
             //    }
             //};
             //container.Add(blurredElement);
-            return container;
-
         }
 
 
