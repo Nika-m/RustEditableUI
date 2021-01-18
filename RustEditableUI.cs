@@ -220,14 +220,14 @@ namespace Oxide.Plugins
                                     //menu add button width:4 heigth:2              askAviability w/h
                                     //??? menu add button xend:10 yend:10           askAviability ???
                                     string key, value;
-                                    for (int i = 3; i < args.Length; i++)
+                                    for (int i = 2; i < args.Length; i++)
                                     {
                                         key = args[i].Substring(0, args[i].IndexOf(":"));
                                         value = args[i].Substring(args[i].IndexOf(":") + 1);
                                         //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                         PrintToConsole($"got key: {key} and values: {value}");
 
-                                        givenArgs.Add(key, value);
+                                        givenArgs[key] = value;
                                     }
 
                                     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -251,7 +251,7 @@ namespace Oxide.Plugins
                                     int height = Convert.ToInt16(givenArgs["height"]);
                                     string color = givenArgs["color"];
                                     string text = givenArgs["text"];
-                                    string bcommand = givenArgs["command"];
+                                    string buttonCommand = givenArgs["command"];
                                     string autoclose = givenArgs["autoclose"];
                                     int offset = Convert.ToInt16(givenArgs["offset"]);
                                     /*
@@ -269,15 +269,18 @@ namespace Oxide.Plugins
                                     {
                                         double[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
                                                                                                 //get xPos yPos xEnd yEnd or "cantfit"
+
+                                        PrintToConsole($"xMin: {getPos[0]} yMin: {getPos[1]} xMax: {getPos[2]} yMax: {getPos[3]}");
+
                                         xMin = Math.Round((getPos[0] * 1 / 12), 3);           //*xOffset 
-                                        yMin = Math.Round((getPos[1] * 1 / 12 * 16 / 9), 3);     //*yOffset
+                                        yMin = Math.Round((1 - (getPos[1] * 1 / 12 * 16 / 9)), 3);     //*yOffset
                                         xMax = Math.Round((getPos[2] * 1 / 12), 3);
-                                        yMax = Math.Round((getPos[3] * 1 / 12 * 16 / 9), 3);
+                                        yMax = Math.Round((1 - (getPos[3] * 1 / 12 * 16 / 9)), 3);
 
 
                                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                                         PrintToConsole("pirvlei shedegi");
-                                        PrintToConsole($"xMin: {xMin} yMin: {xMin} xMax: {xMax} yMax: {yMax}");
+                                        PrintToConsole($"xMin: {xMin} yMin: {yMin} xMax: {xMax} yMax: {yMax}");
                                     }
                                     else
                                     {
@@ -289,9 +292,9 @@ namespace Oxide.Plugins
                                     var drawButton = container.Add(new CuiButton
                                     {
                                         Button = {
-                                            Command = "draw_button " + player.userID.ToString(),
+                                            Command = buttonCommand,
                                             //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                                            Color = "1 0 1 0.8"
+                                            Color = "1 0 1 1"
                                         },
                                         RectTransform = {
                                             AnchorMin = $"{xMin} {yMin}",
@@ -302,9 +305,8 @@ namespace Oxide.Plugins
                                             FontSize = 30,
                                             Align = UnityEngine.TextAnchor.MiddleCenter,
                                         }
-                                    }, "grid_panel", "draw_button");
+                                    }, "button_panel", "draw_button");
 
-                                    CuiHelper.AddUi(player, drawButton);
                                     //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
 
                                 }
@@ -629,14 +631,24 @@ namespace Oxide.Plugins
 
             //========================================================================
 
-            //
+            var buttonPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                    Color = "0 0 0 0" //fully transparent
+                },
+                RectTransform = {
+                    AnchorMin = "0 0",
+                    AnchorMax = "1 1"
+                },
+            }, "menu_panel", "button_panel");
+            //========================================================================
 
             var closeButton = container.Add(new CuiButton
             {
                 Button = {
                     Command = "menu_close " + player.userID.ToString(),
                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "1 0 0 0.8"
+                    Color = "1 0 0 1"
                 },
                 RectTransform = {
                     AnchorMin = "0.9 0.95",
@@ -655,7 +667,7 @@ namespace Oxide.Plugins
                 Button = {
                     Command = "show_grid " + player.userID.ToString(),
                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "0 1 0 0.8"
+                    Color = "0 1 0 1"
                 },
                 RectTransform = {
                     AnchorMin = "0.9 0",
