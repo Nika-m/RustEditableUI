@@ -460,9 +460,9 @@ namespace Oxide.Plugins
         {
             //calculate width and height of button (matrixuli zomebi)
             int xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
-            Globals.aviabilityMatrix[6, 0] = true;
-            Globals.aviabilityMatrix[6, 1] = true;
-            Globals.aviabilityMatrix[6, 2] = true;
+            //Globals.aviabilityMatrix[6, 0] = true;
+            //Globals.aviabilityMatrix[6, 1] = true;
+            //Globals.aviabilityMatrix[6, 2] = true;
             int hopY = 0;
             Boolean success;
             Boolean firstXcolSuccess = false;
@@ -470,10 +470,11 @@ namespace Oxide.Plugins
             //find aviable position
             for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++)
             {
+                isOpen = true;
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 PrintToConsole($"x: {x}");
                 PrintToConsole("matrix width: " + Globals.aviabilityMatrix.GetLength(0));
-                for (int y = 0; y < Globals.aviabilityMatrix.GetLength(1); y++)
+                for (int y = 0; y < Globals.aviabilityMatrix.GetLength(1) - height; y++) //??? -offset checkPointY shouldnot go too down
                 {
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                     PrintToConsole($"y: {y}");
@@ -481,7 +482,10 @@ namespace Oxide.Plugins
                     //2nd iteration: y is hopped now  y+=hopY
                     if (offset > 0 && isOpen)
                     {
-                        x = offset;
+                        if (x < offset)
+                        {
+                            x = offset;
+                        }
                         y = offset;
                         isOpen = false;
                         PrintToConsole($"setting offset y: {y} x: {x}");
@@ -493,7 +497,7 @@ namespace Oxide.Plugins
                     //breaks if finds any nonAviable Position and returns Success = false, and next y position
                     //if everything is Aviable returns Success = true
                     PrintToConsole($"checkPoint Y iteration: {y}");
-                    for (int btnX = x - offset; btnX <= x + width + offset; btnX++)
+                    for (int btnX = x - offset; btnX < x + width + offset; btnX++) //?? btnX <= X
                     {
                         PrintToConsole($"checkSpace X iteration: {btnX}");
                         for (int btnY = y - offset; btnY < y + height + offset; btnY++)
@@ -510,7 +514,7 @@ namespace Oxide.Plugins
                         if (hopY > 0)
                         {
                             y += hopY - 1; //-1 because of y++ in for loop, 
-                                           //offset igulisxmeba ukve shen agaru unda miumato 
+                                           //offset mxolod qveda mxarisa emateba
                                            //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                             PrintToConsole($"hop {hopY} y: {y}");
                             hopY = 0;
@@ -549,7 +553,7 @@ namespace Oxide.Plugins
                     // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
                     // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
                     // pizdec
-                    PrintToConsole($"checking y: {y}");
+                    PrintToConsole($"Last check y: {y}");
                 }
                 if (firstXcolSuccess)
                 {
