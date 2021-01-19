@@ -70,3 +70,22 @@ return new float[] { anchorMin.x, anchorMin.y, anchorMax.x, anchorMax.y };
 }
 
 added grid panel, but skips some lines, Rounding problem, Y must be reversed, linewidth should be corrected
+
+
+configuration 
+save aviability matrix
+
+onPlayerJoin, read matrix from config and assign it to global.aviabilityMatrix
+
+save 
+page1{
+
+ button:1
+ calculated anchorMin x/y, anchorMax x/y
+ command
+ text
+ size
+ 
+ button:2
+...
+}

@@ -118,9 +118,29 @@ namespace Oxide.Plugins
         {
             if (args[0] == "set")
             {
-                rust.RunServerCommand("env.time " + args[1]);
+                switch (args[1])
+                {
+                    case "day":
+                        rust.RunServerCommand("env.time 12");
+                        break;
+                    case "night":
+                        rust.RunServerCommand("env.time 24");
+                        break;
+                    case "evening":
+                        rust.RunServerCommand("env.time 17");
+                        break;
+                    case "noon":
+                        rust.RunServerCommand("env.time 14");
+                        break;
+                    default:
+                        rust.RunServerCommand("env.time " + args[1]);
+                        break;
+                }
             }
+
         }
+
+
 
         [ChatCommand("weather")]
         private void chatCommand_weather(BasePlayer player, string command, string[] args)
@@ -184,6 +204,7 @@ namespace Oxide.Plugins
         Boolean gridIsOpen = false;
         Boolean menuIsCreated = false;
         Boolean gridIsCreated = false;
+        Boolean refreshMenu = false;
 
         [ChatCommand("matrixShow")]
         private void chatCommand_matrixShow(BasePlayer player, string command, string[] args)
@@ -335,6 +356,7 @@ namespace Oxide.Plugins
                                         }
                                     }, "button_panel", "draw_button");
 
+                                    refreshMenu = true;
                                     //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
 
                                 }
@@ -349,7 +371,27 @@ namespace Oxide.Plugins
                         //remove functionality
 
                         break;
+                    case "mouseOn":
+                        rust.RunServerCommand("containerUpdate true");
+                        refreshMenu = true;
+                        break;
+                    case "mouseOff":
+                        rust.RunServerCommand("containerUpdate false");
+                        refreshMenu = true;
+                        break;
                 }
+            }
+
+            if (refreshMenu)
+            {
+                CuiHelper.DestroyUi(player, "menu_panel");
+                CuiHelper.AddUi(player, container);
+                if (!gridIsOpen) //check
+                {
+                    CuiHelper.DestroyUi(player, "grid_panel");
+                }
+                refreshMenu = false;
+                return;
             }
 
             if (menuIsOpen)
@@ -378,6 +420,39 @@ namespace Oxide.Plugins
 
         #endregion
 
+        #region myFunctions
+        //my function that creates CuiElement from CuiPanel
+        CuiElement createElementFromCuiPanel(CuiPanel panel, string parent = "Hud", string name = null)
+        {
+            if (String.IsNullOrEmpty(name))
+            {
+                name = CuiHelper.GetGuid();
+            }
+            CuiElement cuiElement = new CuiElement()
+            {
+                Name = name,
+                Parent = parent,
+                FadeOut = panel.FadeOut
+            };
+            if (panel.Image != null)
+            {
+                cuiElement.Components.Add(panel.Image);
+            }
+            if (panel.RawImage != null)
+            {
+                cuiElement.Components.Add(panel.RawImage);
+            }
+            cuiElement.Components.Add(panel.RectTransform);
+            if (panel.CursorEnabled)
+            {
+                cuiElement.Components.Add(new CuiNeedsCursorComponent());
+            }
+
+            return cuiElement;
+        }
+
+        #endregion
+
         #region ConsoleCommands
 
         [Command("menu")]
@@ -390,6 +465,28 @@ namespace Oxide.Plugins
 
             CuiHelper.DestroyUi(player, "RustEditableUI");
             CuiHelper.AddUi(player, filledTemplate);
+        }
+        //all chat args should be named chatArgs
+        //all console args              cmdArgs
+        [ConsoleCommand("containerUpdate")]
+        private void cmd_containerUpdate(ConsoleSystem.Arg cmdArgs) //
+        {
+            PrintToChat("mouse " + cmdArgs.Args[0]);
+            CuiElement menuPanelElement = createElementFromCuiPanel(new CuiPanel
+            {
+                Image = {
+                    Color = "0 0 0 0.5"
+                },
+                RectTransform = {
+                    AnchorMin = "0.2 0.2",
+                    AnchorMax = "0.8 0.8"
+                },
+                CursorEnabled = Convert.ToBoolean(cmdArgs.Args[0])
+
+
+            }, "Hud", "menu_panel");
+
+            container[0] = menuPanelElement;
         }
 
         [ConsoleCommand("menu_close")]
@@ -468,7 +565,7 @@ namespace Oxide.Plugins
             Boolean firstXcolSuccess = false;
             Boolean isOpen = true;
             //find aviable position
-            for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++)
+            for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++) //??? <= matrix.length - width - offset
             {
                 isOpen = true;
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
