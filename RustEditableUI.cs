@@ -1,6 +1,6 @@
 ﻿using Oxide.Game.Rust.Cui;
-using Oxide.Core.Libraries.Covalence;
 using System;
+using Newtonsoft.Json;
 using System.Collections.Generic;
 
 namespace Oxide.Plugins
@@ -101,10 +101,146 @@ namespace Oxide.Plugins
         ]
         ";
         #endregion
+
+        #region config
+
+        //Okay.. Lets take this slow and easy
+        // Fist lets Declare the config as configData and write whats in it
+        private ConfigData configData;
+        class ConfigData
+        {
+            [JsonProperty(PropertyName = "This Awesome Plugin is developed by")]
+            public string devName = "Nika Maisuradze";
+
+
+            public Boolean[,] aviabilityMatrix;          //!! this should be saved in data not in config
+            public Boolean aviabilityIsCreated = false;  //!! this should be saved in data not in config
+
+            public int PageCount = 1; //starting default value
+
+            public Dictionary<int, List<uiButton>> uiPages = new Dictionary<int, List<uiButton>>();
+
+            //all default values should be loaded from here, and than updated and saved if necessary!!!
+        }
+
+        //when defining new grid, aviability matrix should be created from sctrach and than saved in config
+        //else for default case aviability matrix should be created from current gridScale and saved;
+
+        //Plugins default values 
+        private Dictionary<string, string> ColorLib = new Dictionary<string, string>
+        {
+            {"transparent", "0 0 0 0" },
+            {"black", "0 0 0 1" },
+            {"white", "1 1 1 1" },
+            {"red",   "1 0 0 1" },
+            {"green", "0 1 0 1" },
+            {"blue",  "0 0 1 1" }
+        };
+
+        Boolean menuIsOpen = false;
+        Boolean gridIsOpen = false;
+        Boolean menuIsCreated = false;
+        Boolean gridIsCreated = false;
+        Boolean refreshMenu = false;
+        int currentPage = 0; // starting default value
+
+        //when user changes or adds pages, currentPage and PageCount values should be updated and SAVED IN CONFIG
+
+        //function to insert new button_panel //Page  after last Page,   before interface buttons panel
+
+
+
+        //Okay.. lets make a check and a save function.
+        //Lets first check that if there is a config we can read it.
+        //we will make that into a bool and refernce it
+
+        //Name the bool LoadConfigVariables
+        private bool LoadConfigVariables()
+        {
+            try
+            {
+                configData = Config.ReadObject<ConfigData>();
+            }
+            //See if the config data is the same as what we want
+            catch
+            {
+                return false;
+            }
+            //If there is an error like a syntax error make the bool false
+            SaveConfig(configData);
+            return true;
+            //Otherwise call the save function (we will see that later) and make the bool true
+        }
+
+
+
+
+        //Lets create the config if there isnt one in the config folder
+        protected override void LoadDefaultConfig()
+        {
+            Puts("Creating new config file.");
+
+            configData = new ConfigData(); //create default config from your configData class and than save it.
+            SaveConfig(configData);
+        }
+
+        void SaveConfig(ConfigData config)
+        {
+            Config.WriteObject(config, true);
+        }
+
+        #endregion
+
+
+        //On plugin initialise
         void Init()
         {
+
             Puts("here we go");
+
+            //check it the bool above is false
+            if (!LoadConfigVariables())
+            {
+                //If its false there is an error. so we will print that to console.
+                Puts("Config file issue detected. Please delete file, or check syntax and fix.");
+                return;
+            }
         }
+
+        [ChatCommand("config")]
+        void confTest(BasePlayer player)
+        {
+            SendReply(player, configData.devName);
+        }
+
+
+
+        public class uiButton
+        {
+            public double xMin { get; set; }
+
+            public double yMin { get; set; }
+
+            public double xMax { get; set; }
+
+            public double yMax { get; set; }
+
+            public string Color { get; set; }
+
+            public string Text { get; set; }
+
+            public string Command { get; set; }
+
+            public Boolean AutoClose { get; set; }
+
+            public int FontSize { get; set; }
+            //NonCUI
+            public int Width { get; set; }
+            public int Height { get; set; }
+            public int Offset { get; set; }
+            //....
+        }
+
 
         void OnPlayerConnected(Network.Message packet)
         {
@@ -184,42 +320,22 @@ namespace Oxide.Plugins
             // Server.Command(string.Format("env.time {0}", 24);
         }
 
-        private Dictionary<string, string> ColorLib = new Dictionary<string, string>
-        {
-            {"transparent", "0 0 0 0" },
-            {"black", "0 0 0 1" },
-            {"white", "1 1 1 1" },
-            {"red",   "1 0 0 1" },
-            {"green", "0 1 0 1" },
-            {"blue",  "0 0 1 1" }
-        };
 
-        static class Globals
-        {
-            public static Boolean[,] aviabilityMatrix;
-
-        }
-
-        Boolean menuIsOpen = false;
-        Boolean gridIsOpen = false;
-        Boolean menuIsCreated = false;
-        Boolean gridIsCreated = false;
-        Boolean refreshMenu = false;
 
         [ChatCommand("matrixShow")]
         private void chatCommand_matrixShow(BasePlayer player, string command, string[] args)
         {
-            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is {Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
+            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is {configData.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
         }
         [ChatCommand("matrixSet")]
         private void chatCommand_matrixSet(BasePlayer player, string command, string[] args)
         {
-            Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])] = Convert.ToBoolean(args[2]);
-            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is set to {Globals.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
+            configData.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])] = Convert.ToBoolean(args[2]);
+            PrintToChat($"Pos X: {args[0]} Y: {args[1]} is set to {configData.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
         }
 
         [ChatCommand("menu")]
-        private void chatCommand_menu(BasePlayer player, string command, string[] args)
+        private void chatCommand_menu(BasePlayer player, string chatCommand, string[] args)
         {
             if (args.Length > 0)
             {
@@ -237,11 +353,12 @@ namespace Oxide.Plugins
                                     {"yend","-1"},
                                     {"width","4"},
                                     {"height","2"},
-                                    {"offset","1"},
+                                    {"offset","0"},
                                     {"color","red"},
                                     {"text","default text"},
                                     {"command","chat.say defaultCommand" },
-                                    {"autoclose","false"}
+                                    {"autoclose","false"},
+                                    {"fontsize","25"}
                                     /*
                                     startpos: left top aviable cell, offseted 1 cell 
                                     width:4
@@ -249,7 +366,7 @@ namespace Oxide.Plugins
                                     endpos:none
                                     */
                                 };
-                                    double xMin = 0, yMin = 0, xMax = 0, yMax = 0;
+                                    //   double xMinDone = 0, yMinDone = 0, xMaxDone = 0, yMaxDone = 0;
 
 
                                     //create string of all values
@@ -293,16 +410,22 @@ namespace Oxide.Plugins
                                     string value = 
                                     */
 
-                                    //implement all dictionary key:values
-                                    int xPos = Convert.ToInt16(givenArgs["xpos"]);
-                                    int yPos = Convert.ToInt16(givenArgs["ypos"]);
-                                    int width = Convert.ToInt16(givenArgs["width"]);
-                                    int height = Convert.ToInt16(givenArgs["height"]);
-                                    string color = ColorLib[givenArgs["color"]];
-                                    string text = givenArgs["text"];
-                                    string buttonCommand = givenArgs["command"];
-                                    string autoclose = givenArgs["autoclose"];    //not connected yet
-                                    int offset = Convert.ToInt16(givenArgs["offset"]);
+                                    //implement all dictionary key:values, 
+                                    //all dictionary values are STRING so you have to convert them
+
+
+                                    // int xPos = Convert.ToInt16(givenArgs["xpos"]);
+                                    // int yPos = Convert.ToInt16(givenArgs["ypos"]);
+                                    // int width = Convert.ToInt16(givenArgs["width"]);
+                                    // int height = Convert.ToInt16(givenArgs["height"]);
+                                    //string color = ColorLib[givenArgs["color"]];
+                                    // string text = givenArgs["text"];
+                                    //string command = givenArgs["command"];
+                                    // Boolean autoclose = Convert.ToBoolean(givenArgs["autoclose"]);
+                                    // int fontSize = Convert.ToInt16(givenArgs["fontsize"]);
+
+                                    // int offset = Convert.ToInt16(givenArgs["offset"]);
+
                                     /*
                                     startpos: left top aviable cell, offseted 1 cell 
                                     width:4
@@ -310,26 +433,45 @@ namespace Oxide.Plugins
                                     endpos:none 
                                      */
 
-
-
+                                    //uiButton - fill btn with chat args
+                                    var btn = new uiButton
+                                    {
+                                        xMin = Convert.ToInt16(givenArgs["xpos"]),
+                                        yMin = Convert.ToInt16(givenArgs["ypos"]),
+                                        //   xMax = ,
+                                        //   yMax = ,
+                                        Color = ColorLib[givenArgs["color"]],
+                                        Text = givenArgs["text"],
+                                        Command = givenArgs["command"],
+                                        AutoClose = Convert.ToBoolean(givenArgs["autoclose"]),
+                                        FontSize = Convert.ToInt16(givenArgs["fontsize"]),
+                                        //center left right
+                                        //NonCui
+                                        Width = Convert.ToInt16(givenArgs["width"]),
+                                        Height = Convert.ToInt16(givenArgs["height"]),
+                                        Offset = Convert.ToInt16(givenArgs["offset"])
+                                        //....
+                                    };
 
                                     // search should start from 0 0 and xPos yPos should be returned from aviability
-                                    if (xPos == -1)
+                                    if (btn.xMin == -1)
                                     {
-                                        int[] getPos = askAviability(width, height, offset); //send width/height  ?...endpos
-                                                                                             //get xPos yPos xEnd yEnd or "cantfit"
+                                        int[] getPos = askAviability(btn.Width, btn.Height, btn.Offset); //send width/height  ?...endpos
+                                                                                                         //get xPos yPos xEnd yEnd or "cantfit"
 
                                         PrintToConsole($"xMin: {getPos[0]} yMin: {getPos[1]} xMax: {getPos[2]} yMax: {getPos[3]}");
 
-                                        xMin = Math.Round((Convert.ToDouble(getPos[0]) * 1 / 12), 3);           //*xOffset 
-                                        yMin = Math.Round((1 - (Convert.ToDouble(getPos[1]) * 1 / 12 * 16 / 9)), 3);     //*yOffset
-                                        xMax = Math.Round((Convert.ToDouble(getPos[2]) * 1 / 12), 3);
-                                        yMax = Math.Round((1 - (Convert.ToDouble(getPos[3]) * 1 / 12 * 16 / 9)), 3);
+
+                                        //uiButton - update btn with calculated values
+                                        btn.xMin = Math.Round((Convert.ToDouble(getPos[0]) * 1 / 12), 3);           //*xOffset 
+                                        btn.yMin = Math.Round((1 - (Convert.ToDouble(getPos[1]) * 1 / 12 * 16 / 9)), 3);     //*yOffset
+                                        btn.xMax = Math.Round((Convert.ToDouble(getPos[2]) * 1 / 12), 3);
+                                        btn.yMax = Math.Round((1 - (Convert.ToDouble(getPos[3]) * 1 / 12 * 16 / 9)), 3);
 
 
                                         //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                        PrintToConsole("pirvlei shedegi");
-                                        PrintToConsole($"xMin: {xMin} yMin: {yMin} xMax: {xMax} yMax: {yMax}");
+                                        //PrintToConsole("pirvlei shedegi");
+                                        //PrintToConsole($"xMin: {xMinDone} yMin: {yMin} xMax: {xMax} yMax: {yMax}");
                                     }
                                     else
                                     {
@@ -337,27 +479,40 @@ namespace Oxide.Plugins
 
                                     }
 
-                                    //draw it 
-                                    var drawButton = container.Add(new CuiButton
-                                    {
-                                        Button = {
-                                            Command = buttonCommand,
-                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                                            Color = color
-                                        },
-                                        RectTransform = {
-                                            AnchorMin = $"{xMin} {yMin}",
-                                            AnchorMax = $"{xMax} {yMax}"
-                                        },
-                                        Text = {
-                                            Text = text,
-                                            FontSize = 30,
-                                            Align = UnityEngine.TextAnchor.MiddleCenter,
-                                        }
-                                    }, "button_panel", "draw_button");
+
+                                    //draw it (add btn in current Page container
+
+                                    containerAddButton(btn);
 
                                     refreshMenu = true;
-                                    //when you have xPos and yPos you should calculate xEnd yEnd based on width/height
+
+                                    //SAVE IT
+                                    //DONE add button to current panel, in config
+                                    //DONE create list of buttons, and add in dictionary current page and that list
+                                    //DONE when you have xPos and yPos you should calculate xEnd yEnd based on width/height
+                                    //DONE draw this bitches from config at startup
+
+                                    Puts("1");
+                                    try
+                                    {
+                                        Puts("1.5");
+                                        configData.uiPages[currentPage].Add(btn); //if this doesnot exist, create new one
+                                        Puts("2");
+                                    }
+                                    catch
+                                    {
+                                        Puts("3");
+
+                                        //var page = new List<uiButton>();
+                                        configData.uiPages.Add(currentPage, new List<uiButton>()); //??? list without name #yes pointer should be saved in array
+                                        Puts("4");
+                                        configData.uiPages[currentPage].Add(btn);
+                                        Puts("5");
+                                    }
+                                    Puts("6");
+                                    SaveConfig(configData);
+                                    Puts("7");
+
 
                                 }
                                 break;
@@ -366,6 +521,7 @@ namespace Oxide.Plugins
                                 break;
                         }
                         break;
+
 
                     case "remove":
                         //remove functionality
@@ -381,6 +537,7 @@ namespace Oxide.Plugins
                         break;
                 }
             }
+
 
             if (refreshMenu)
             {
@@ -406,6 +563,8 @@ namespace Oxide.Plugins
                     generate_menu(player);
                     menuIsCreated = true;
                 }
+
+
                 CuiHelper.AddUi(player, container);
                 if (!gridIsOpen)
                 {
@@ -421,6 +580,32 @@ namespace Oxide.Plugins
         #endregion
 
         #region myFunctions
+
+
+        public void containerAddButton(uiButton btn)
+        {
+
+            var drawButton = container.Add(new CuiButton //??? is drawButton needed?
+            {
+                Button = {
+                                            Command = btn.Command,
+                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                            Color = btn.Color
+                                        },
+                RectTransform = {
+                                            AnchorMin = $"{btn.xMin} {btn.yMin}",
+                                            AnchorMax = $"{btn.xMax} {btn.yMax}",
+
+                                        },
+                Text = {
+                                            Text = btn.Text,
+                                            FontSize = btn.FontSize,
+                                            Align = UnityEngine.TextAnchor.MiddleCenter, //!!! should be filled from btn
+                                        }
+            }, $"button_panel_{currentPage}", "draw_button"); //!!! draw_button_{?}
+            Puts($"button_panel_{currentPage}");
+        }
+
         //my function that creates CuiElement from CuiPanel
         CuiElement createElementFromCuiPanel(CuiPanel panel, string parent = "Hud", string name = null)
         {
@@ -542,40 +727,33 @@ namespace Oxide.Plugins
 
         public void createAviability(int x, int y)
         {
-
-            Globals.aviabilityMatrix = new Boolean[x, y]; //global
-                                                          /*
-                                                          for (int i = 0; i < x; i++) {
-                                                              for (int j = 0; j < y; j++) {
-
-                                                              }
-                                                          }
-                                                          */
-
+            configData.aviabilityMatrix = new Boolean[x, y];
         }
         private int[] askAviability(int width, int height, int offset)
         {
             //calculate width and height of button (matrixuli zomebi)
             int xPos = 0, yPos = 0, xEnd = 0, yEnd = 0;
-            //Globals.aviabilityMatrix[6, 0] = true;
-            //Globals.aviabilityMatrix[6, 1] = true;
-            //Globals.aviabilityMatrix[6, 2] = true;
+            //configData.aviabilityMatrix[6, 0] = true;
+            //configData.aviabilityMatrix[6, 1] = true;
+            //configData.aviabilityMatrix[6, 2] = true;
             int hopY = 0;
             Boolean success;
             Boolean firstXcolSuccess = false;
             Boolean isOpen = true;
             //find aviable position
-            for (int x = 0; x < Globals.aviabilityMatrix.GetLength(0); x++) //??? <= matrix.length - width - offset
+            for (int x = 0; x < configData.aviabilityMatrix.GetLength(0); x++) //??? <= matrix.length - width - offset
             {
                 isOpen = true;
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                 PrintToConsole($"x: {x}");
-                PrintToConsole("matrix width: " + Globals.aviabilityMatrix.GetLength(0));
-                for (int y = 0; y < Globals.aviabilityMatrix.GetLength(1) - height; y++) //??? -offset checkPointY shouldnot go too down
+                PrintToConsole("matrix width: " + configData.aviabilityMatrix.GetLength(0));
+                PrintToConsole("matrix height: " + configData.aviabilityMatrix.GetLength(1));
+                PrintToConsole($"button height: {height}");
+                for (int y = 0; y < configData.aviabilityMatrix.GetLength(1) - height; y++) //??? -offset checkPointY shouldnot go too down
                 {
                     //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
                     PrintToConsole($"y: {y}");
-                    PrintToConsole("matrix height: " + Globals.aviabilityMatrix.GetLength(1));
+                    PrintToConsole("matrix height: " + configData.aviabilityMatrix.GetLength(1));
                     //2nd iteration: y is hopped now  y+=hopY
                     if (offset > 0 && isOpen)
                     {
@@ -601,7 +779,7 @@ namespace Oxide.Plugins
                         {
                             PrintToConsole($"offset: {offset} \n btnX: {btnX}  btnY: {btnY}");
 
-                            if (Globals.aviabilityMatrix[btnX, btnY])
+                            if (configData.aviabilityMatrix[btnX, btnY])
                             {
                                 PrintToConsole($"btnX: {btnX} btnY {btnY}");
                                 hopY += 1;
@@ -634,7 +812,7 @@ namespace Oxide.Plugins
                         {
                             for (int matrixPosY = yEnd; matrixPosY < yPos; matrixPosY++) //yEnd yPos reversed, because matrix Y is reversed
                             {
-                                Globals.aviabilityMatrix[matrixPosX, matrixPosY] = true;
+                                configData.aviabilityMatrix[matrixPosX, matrixPosY] = true;
                             }
                         }
 
@@ -736,17 +914,25 @@ namespace Oxide.Plugins
                     Color = "1 1 1 0.5",
                     FadeIn = Convert.ToSingle(i * yOffset * 9/16 * 3)
                     //FadeOut = Convert.ToSingle(i * yOffset * 9/16 * 3)
-            },
+                    },
                     RectTransform = {
                     AnchorMin = "0 "+(1 - ( Math.Round( (i * yOffset - linewidth / 2)  , 3) + linewidth )),
                     AnchorMax = "1 "+(Math.Round(1-(i*yOffset-linewidth/2),3)) //not reversing Y,it wont make any sence for grid lines
                     //AnchorMax = (AnchorMin.y+linewidth)+" 1"
-                },
+                    },
                 }, "grid_panel", $"horizontal_line_{i}");
 
-                createAviability(x + 1, y + 1); //it shouldnot be created here
+
                 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                PrintToConsole("" + Globals.aviabilityMatrix[3, 0]);
+                //PrintToConsole("" + configData.aviabilityMatrix[3, 0]);
+            }
+
+            if (!configData.aviabilityIsCreated)
+            {
+                createAviability(x + 1, y + 1); //??? it shouldnot be created here
+                PrintToConsole($"createAviability width: {x + 1} height: {y + 1}");
+                configData.aviabilityIsCreated = true;
+                SaveConfig(configData);//???
             }
             #endregion
 
@@ -756,10 +942,6 @@ namespace Oxide.Plugins
         //clickable argument in command
         void generate_menu(BasePlayer player)
         {
-
-            //var container = new CuiElementContainer();
-
-
 
             var menuPanel = container.Add(new CuiPanel
             {
@@ -789,18 +971,42 @@ namespace Oxide.Plugins
             }, "menu_panel", "grid_panel");
 
             //========================================================================
-
-            var buttonPanel = container.Add(new CuiPanel
+            //creating Pages
+            for (int i = 0; i < configData.PageCount; i++)
             {
-                Image = {
-                    Color = "0 0 0 0" //fully transparent
-                },
-                RectTransform = {
-                    AnchorMin = "0 0",
-                    AnchorMax = "1 1"
-                },
-            }, "menu_panel", "button_panel");
+                var buttonPanel = container.Add(new CuiPanel
+                {
+                    Image = {
+                        Color = "0 0 0 0" //fully transparent
+                    },
+                    RectTransform = {
+                        AnchorMin = "0 0",
+                        AnchorMax = "1 1"
+                    },
+                }, "menu_panel", $"button_panel_{i}");
+
+                Puts($"generated_button_panel_{i}");
+
+
+                //adding buttons from config to Pages
+                try
+                {
+                    foreach (uiButton button in configData.uiPages[i])
+                    {
+                        containerAddButton(button);
+                    }
+                }
+                catch
+                {
+                    PrintToChat($"Couldn't fill page {i} with uiButtons from config");
+                }
+            }
             //========================================================================
+
+
+
+
+            //Grid, close nextPage previousPage addPage button ebi calke panelshia gasatani
 
             var closeButton = container.Add(new CuiButton
             {
