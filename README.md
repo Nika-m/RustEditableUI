@@ -1,2 +1,2 @@
 # RustEditableUI
-trying to make editable user interface plugin for Rust
+Rust INGAME User Interface creator with bunch of awesome features
