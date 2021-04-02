@@ -104,6 +104,25 @@ namespace Oxide.Plugins
         ";
         #endregion
 
+        #region Tasks
+        /*================================================== Tasks ==================================================
+            1. when adding buttons from chat command, buttons should be added based on which buttons_panel is active at the moment
+               and add them respectively to that panel and save correctly in config file
+            2. remove page
+            3. clear buttons
+            4. remove button
+            5. undo buttons
+            6. switch pages
+
+            7. on first menu opening generating all pages with its buttons may be working correctly, but you should only render first page
+               also you should keep track of current active page and render it correctly after logoff/logon menuoff/menuon
+            
+            8. add button input bar
+            9. shortened button args w:4 h:2
+            10. add with coordinates bypassing the aviability matrix
+
+        ----------------------------------------------------------------------------------------------------*/
+        #endregion
         #region config
 
         //Okay.. Lets take this slow and easy
@@ -198,13 +217,13 @@ namespace Oxide.Plugins
         void Init()
         {
 
-       //     foreach (var safezone in UnityEngine.Object.FindObjectsOfType<MonumentInfo>())
-      //      {
-                //safezone.IsSafeZone = false;
-                // safezone.enabled = false;
-               // safezone.enabled = false;
-         //       Puts(safezone.name + "IsSafeZone: false");
-        //    }
+            //     foreach (var safezone in UnityEngine.Object.FindObjectsOfType<MonumentInfo>())
+            //      {
+            //safezone.IsSafeZone = false;
+            // safezone.enabled = false;
+            // safezone.enabled = false;
+            //       Puts(safezone.name + "IsSafeZone: false");
+            //    }
 
             Puts("here we go");
 
@@ -217,12 +236,7 @@ namespace Oxide.Plugins
             }
         }
 
-        [ChatCommand("config")]
-        void confTest(BasePlayer player)
-        {
-            SendReply(player, configData.devName);
-        }
-
+      
 
 
         public class clientButton
@@ -257,6 +271,7 @@ namespace Oxide.Plugins
             //welcome text form server in chat
             //put defaulr building kit in players inventory
         }
+
         #region MinecraftCommands
         //minecraft time set command
         [ChatCommand("time")]
@@ -316,6 +331,15 @@ namespace Oxide.Plugins
         #region ChatCommands
         CuiElementContainer container = new CuiElementContainer(); //global
 
+        //===================================== debug or info commands ================================================ 
+
+        [ChatCommand("config")]
+        void confTest(BasePlayer player)
+        {
+            SendReply(player, configData.devName);
+        }
+
+
         [ChatCommand("check")]
         private void chatCommand_check(BasePlayer player, string command, string[] args)
         {
@@ -343,6 +367,8 @@ namespace Oxide.Plugins
             configData.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])] = Convert.ToBoolean(args[2]);
             PrintToChat($"Pos X: {args[0]} Y: {args[1]} is set to {configData.aviabilityMatrix[Convert.ToInt16(args[0]), Convert.ToInt16(args[1])]}");
         }
+
+        //-------------------------------------------------------------------------------------
 
         [ChatCommand("menu")]
         private void chatCommand_menu(BasePlayer player, string chatCommand, string[] args)
@@ -529,6 +555,9 @@ namespace Oxide.Plugins
                             case "text":
                                 //adding textfunctionality
                                 break;
+                            case "page":
+
+                                break;
                         }
                         break;
 
@@ -587,71 +616,8 @@ namespace Oxide.Plugins
         }
 
 
-        #endregion
-
-        #region myFunctions
-
-
-        public void containerAddButton(clientButton btn)
-        {
-
-            var drawButton = container.Add(new CuiButton //??? is drawButton needed?
-            {
-                Button = {
-                                            Command = btn.Command,
-                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                                            Color = btn.Color
-                                        },
-                RectTransform = {
-                                            AnchorMin = $"{btn.xMin} {btn.yMin}",
-                                            AnchorMax = $"{btn.xMax} {btn.yMax}",
-
-                                        },
-                Text = {
-                                            Text = btn.Text,
-                                            FontSize = btn.FontSize,
-                                            Align = UnityEngine.TextAnchor.MiddleCenter, //!!! should be filled from btn
-                                        }
-            }, $"button_panel_{currentPage}", "draw_button"); //!!! draw_button_{?}
-            Puts($"button_panel_{currentPage}");
-        }
-
-        //my function that creates CuiElement from CuiPanel
-        CuiElement createElementFromCuiPanel(CuiPanel panel, string parent = "Hud", string name = null)
-        {
-            if (String.IsNullOrEmpty(name))
-            {
-                name = CuiHelper.GetGuid();
-            }
-            CuiElement cuiElement = new CuiElement()
-            {
-                Name = name,
-                Parent = parent,
-                FadeOut = panel.FadeOut
-            };
-            if (panel.Image != null)
-            {
-                cuiElement.Components.Add(panel.Image);
-            }
-            if (panel.RawImage != null)
-            {
-                cuiElement.Components.Add(panel.RawImage);
-            }
-            cuiElement.Components.Add(panel.RectTransform);
-            if (panel.CursorEnabled)
-            {
-                cuiElement.Components.Add(new CuiNeedsCursorComponent());
-            }
-
-            return cuiElement;
-        }
-
-        #endregion
-
-        #region ConsoleCommands
-
-        [Command("menu")]
-        private void consoleCommand_menu(BasePlayer player, string command, string[] args)
+        [ChatCommand("menu2")]
+        private void chatCommand_menu2(BasePlayer player, string command, string[] args)
         {
             //var bPlayer = (BasePlayer)player.Object;
             var labelText = "Hello World!";
@@ -661,10 +627,74 @@ namespace Oxide.Plugins
             CuiHelper.DestroyUi(player, "RustEditableUI");
             CuiHelper.AddUi(player, filledTemplate);
         }
+
+        #endregion
+
+        #region ConsoleCommands
+        //===================================== debug or info commands ================================================ 
+        
+            //all chat args should be named chatArgs
+            //all console args              cmdArgs
+        [ConsoleCommand("getinfo")]
+        private void cmd_getInfo(ConsoleSystem.Arg cmdArgs)
+        {
+
+            switch (cmdArgs.Args[1])
+            {
+                case "container":
+                    PrintToConsole($"Container size: {container.Count}");
+                    break;
+                case "c":
+                    
+                    break;
+                case "a":
+                    
+                    break;
+                case "b":
+                    
+                    break;
+                default:
+                    PrintToConsole("please indicate what info are you looking for, ex: getinfo container");
+                    break;
+            }
+        }
+
+        [ConsoleCommand("setinfo")]
+        private void cmd_setInfo(ConsoleSystem.Arg cmdArgs)
+        {
+
+            switch (cmdArgs.Args[1])
+            {
+                case "pagecount":
+                    configData.PageCount++;
+                    PrintToConsole($"pagecount: {configData.PageCount}");
+                    SaveConfig(configData);
+                    PrintToConsole($"pagecount after saving : {configData.PageCount}");
+
+                    break;
+                case "c":
+
+                    break;
+                case "a":
+
+                    break;
+                case "b":
+
+                    break;
+                default:
+                    PrintToConsole("please indicate what info are you looking for, ex: setinfo pagecount");
+                    break;
+            }
+        }
+
+
+
+        //-------------------------------------------------------------------------------------------------------------
+
         //all chat args should be named chatArgs
         //all console args              cmdArgs
         [ConsoleCommand("containerUpdate")]
-        private void cmd_containerUpdate(ConsoleSystem.Arg cmdArgs) //
+        private void cmd_containerUpdate(ConsoleSystem.Arg cmdArgs)
         {
             PrintToChat("mouse " + cmdArgs.Args[0]);
             CuiElement menuPanelElement = createElementFromCuiPanel(new CuiPanel
@@ -730,8 +760,25 @@ namespace Oxide.Plugins
 
         }
 
+        [ConsoleCommand("add_page")]
+        private void cmd_addPage(ConsoleSystem.Arg Args) {
+            configData.PageCount++;
+            SaveConfig(configData);
+            //generate buttons page and add to container
+            var newButtonsPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                        Color = "0 0 0 0" //fully transparent
+                    },
+                RectTransform = {
+                        AnchorMin = "0 0",
+                        AnchorMax = "1 1"
+                    },
+            }, "pages_panel", $"buttons_panel_{configData.PageCount}");
 
-
+            Puts($"generated_buttons_panel_{configData.PageCount}");
+        }
+        #endregion
 
         #region aviability
 
@@ -854,9 +901,62 @@ namespace Oxide.Plugins
 
         #endregion
 
-        #endregion
 
 
+
+        public void containerAddButton(clientButton btn)
+        {
+
+            var drawButton = container.Add(new CuiButton //??? is drawButton needed?
+            {
+                Button = {
+                                            Command = btn.Command,
+                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                            Color = btn.Color
+                                        },
+                RectTransform = {
+                                            AnchorMin = $"{btn.xMin} {btn.yMin}",
+                                            AnchorMax = $"{btn.xMax} {btn.yMax}",
+
+                                        },
+                Text = {
+                                            Text = btn.Text,
+                                            FontSize = btn.FontSize,
+                                            Align = UnityEngine.TextAnchor.MiddleCenter, //!!! should be filled from btn
+                                        }
+            }, $"buttons_panel_{currentPage}", "draw_button"); //!!! draw_button_{?}
+            Puts($"buttons_panel_{currentPage}");
+        }
+
+        //my function that creates CuiElement from CuiPanel
+        CuiElement createElementFromCuiPanel(CuiPanel panel, string parent = "Hud", string name = null)
+        {
+            if (String.IsNullOrEmpty(name))
+            {
+                name = CuiHelper.GetGuid();
+            }
+            CuiElement cuiElement = new CuiElement()
+            {
+                Name = name,
+                Parent = parent,
+                FadeOut = panel.FadeOut
+            };
+            if (panel.Image != null)
+            {
+                cuiElement.Components.Add(panel.Image);
+            }
+            if (panel.RawImage != null)
+            {
+                cuiElement.Components.Add(panel.RawImage);
+            }
+            cuiElement.Components.Add(panel.RectTransform);
+            if (panel.CursorEnabled)
+            {
+                cuiElement.Components.Add(new CuiNeedsCursorComponent());
+            }
+
+            return cuiElement;
+        }
 
 
         void generate_grid(BasePlayer player, double gridscale = 12, double linewidth = 1)
@@ -950,6 +1050,7 @@ namespace Oxide.Plugins
 
 
         //clickable argument in command
+        //generating menu at startup from config/data file
         void generate_menu(BasePlayer player)
         {
 
@@ -981,10 +1082,21 @@ namespace Oxide.Plugins
             }, "menu_panel", "grid_panel");
 
             //========================================================================
-            //creating Pages
+            //creating Pages layer panel
+            var pagesPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                    Color = "0 0 0 0" //fully transparent
+                },
+                RectTransform = {
+                    AnchorMin = "0 0",
+                    AnchorMax = "1 1"
+                },
+            }, "menu_panel", "pages_panel");
+
             for (int i = 0; i < configData.PageCount; i++)
             {
-                var buttonPanel = container.Add(new CuiPanel
+                var buttonsPanel = container.Add(new CuiPanel
                 {
                     Image = {
                         Color = "0 0 0 0" //fully transparent
@@ -993,9 +1105,9 @@ namespace Oxide.Plugins
                         AnchorMin = "0 0",
                         AnchorMax = "1 1"
                     },
-                }, "menu_panel", $"button_panel_{i}");
+                }, "pages_panel", $"buttons_panel_{i}");
 
-                Puts($"generated_button_panel_{i}");
+                Puts($"generated_buttons_panel_{i}");
 
 
                 //adding buttons from config to Pages
