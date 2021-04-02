@@ -1,3 +1,34 @@
+        /*================================================== Tasks ==================================================
+            1. when adding buttons from chat command, buttons should be added based on which buttons_panel is active at the moment
+               and add them respectively to that panel and save correctly in config file
+            2. remove page
+            3. clear buttons
+            4. remove button
+            5. undo buttons
+            6. switch pages
+
+            7. on first menu opening generating all pages with its buttons may be working correctly, but you should only render first page
+               also you should keep track of current active page and render it correctly after logoff/logon menuoff/menuon
+            
+            8. add button input bar
+            9. shortened button args w:4 h:2
+            10. add with coordinates bypassing the aviability matrix
+            11. alignText property when adding button
+            12. able to change default values of button adding
+            13. able to set custom commands for different pages for example to set /menu "info" for some specific page or maybe straigh /info :D momindoma dzmaam
+            14. maybe settings gear icon that opens up menu settings
+            15. set custom menu size on screen and grid size
+	    16. move config objects in DATA
+
+				    //DONE SAVE IT
+                                    //DONE add button to current panel, in config
+                                    //DONE create list of buttons, and add in dictionary current page and that list
+                                    //DONE when you have xPos and yPos you should calculate xEnd yEnd based on width/height
+                                    //DONE draw this bitches from config at startup
+
+        ----------------------------------------------------------------------------------------------------*/
+
+
 menu │add 	│button color:red text:what i want autoclose:true
      │remove	│panel 
       edit	 defaults width:5

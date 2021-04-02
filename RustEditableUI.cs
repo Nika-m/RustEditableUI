@@ -120,6 +120,12 @@ namespace Oxide.Plugins
             8. add button input bar
             9. shortened button args w:4 h:2
             10. add with coordinates bypassing the aviability matrix
+            11. alignText property when adding button
+            12. able to change default values of button adding
+            13. able to set custom commands for different pages for example to set /menu "info" for some specific page or maybe straigh /info :D momindoma dzmaam
+            14. maybe settings gear icon that opens up menu settings
+            15. set custom menu size on screen and grid size
+            16. move config objects in DATA
 
         ----------------------------------------------------------------------------------------------------*/
         #endregion
@@ -236,7 +242,7 @@ namespace Oxide.Plugins
             }
         }
 
-      
+
 
 
         public class clientButton
@@ -516,13 +522,13 @@ namespace Oxide.Plugins
                                     }
 
 
-                                    //draw it (add btn in current Page container
+                                    //draw it (add btn in current Page containercontainerUpdate
 
                                     containerAddButton(btn);
 
                                     refreshMenu = true;
 
-                                    //SAVE IT
+                                    //DONE SAVE IT
                                     //DONE add button to current panel, in config
                                     //DONE create list of buttons, and add in dictionary current page and that list
                                     //DONE when you have xPos and yPos you should calculate xEnd yEnd based on width/height
@@ -632,26 +638,25 @@ namespace Oxide.Plugins
 
         #region ConsoleCommands
         //===================================== debug or info commands ================================================ 
-        
-            //all chat args should be named chatArgs
-            //all console args              cmdArgs
+
+        //all chat args should be named chatArgs
+        //all console args              cmdArgs
         [ConsoleCommand("getinfo")]
         private void cmd_getInfo(ConsoleSystem.Arg cmdArgs)
         {
-
-            switch (cmdArgs.Args[1])
+            switch (cmdArgs.Args[0])
             {
                 case "container":
                     PrintToConsole($"Container size: {container.Count}");
                     break;
                 case "c":
-                    
+
                     break;
                 case "a":
-                    
+
                     break;
                 case "b":
-                    
+
                     break;
                 default:
                     PrintToConsole("please indicate what info are you looking for, ex: getinfo container");
@@ -662,8 +667,7 @@ namespace Oxide.Plugins
         [ConsoleCommand("setinfo")]
         private void cmd_setInfo(ConsoleSystem.Arg cmdArgs)
         {
-
-            switch (cmdArgs.Args[1])
+            switch (cmdArgs.Args[0])
             {
                 case "pagecount":
                     configData.PageCount++;
@@ -696,7 +700,8 @@ namespace Oxide.Plugins
         [ConsoleCommand("containerUpdate")]
         private void cmd_containerUpdate(ConsoleSystem.Arg cmdArgs)
         {
-            PrintToChat("mouse " + cmdArgs.Args[0]);
+            //Docs: just changing main panel CursorEnabled property and overwriting existing panel with new one
+            PrintToChat("mouse is set to: " + cmdArgs.Args[0]);
             CuiElement menuPanelElement = createElementFromCuiPanel(new CuiPanel
             {
                 Image = {
@@ -759,9 +764,10 @@ namespace Oxide.Plugins
             }
 
         }
-
+        //Task update config when adding page
         [ConsoleCommand("add_page")]
-        private void cmd_addPage(ConsoleSystem.Arg Args) {
+        private void cmd_addPage(ConsoleSystem.Arg Args)
+        {
             configData.PageCount++;
             SaveConfig(configData);
             //generate buttons page and add to container
@@ -777,6 +783,14 @@ namespace Oxide.Plugins
             }, "pages_panel", $"buttons_panel_{configData.PageCount}");
 
             Puts($"generated_buttons_panel_{configData.PageCount}");
+        }
+
+        //nextPage, prevPage, specificPage should run with argument which page should be rendered
+        [ConsoleCommand("switch_page")]
+        private void cmd_switchPage(ConsoleSystem.Arg cmdArgs)
+        {
+            int currentPage = Convert.ToInt32(cmdArgs.Args[0]);
+            //?move menu data in dictionary, gridIsShown, mouseOn, Page and then refresh menu, on refresh function should note and render menu based on those properties
         }
         #endregion
 
