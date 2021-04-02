@@ -8,6 +8,8 @@ namespace Oxide.Plugins
     [Info("RustEditableUI", "Nika", "0.1.1")]
     public class RustEditableUI : RustPlugin
     {
+
+
         #region CuiTEMPLATE
         private static string TEMPLATE = @"[
           {
@@ -118,7 +120,7 @@ namespace Oxide.Plugins
 
             public int PageCount = 1; //starting default value
 
-            public Dictionary<int, List<uiButton>> uiPages = new Dictionary<int, List<uiButton>>();
+            public Dictionary<int, List<clientButton>> uiPages = new Dictionary<int, List<clientButton>>();
 
             //all default values should be loaded from here, and than updated and saved if necessary!!!
         }
@@ -196,6 +198,14 @@ namespace Oxide.Plugins
         void Init()
         {
 
+       //     foreach (var safezone in UnityEngine.Object.FindObjectsOfType<MonumentInfo>())
+      //      {
+                //safezone.IsSafeZone = false;
+                // safezone.enabled = false;
+               // safezone.enabled = false;
+         //       Puts(safezone.name + "IsSafeZone: false");
+        //    }
+
             Puts("here we go");
 
             //check it the bool above is false
@@ -215,7 +225,7 @@ namespace Oxide.Plugins
 
 
 
-        public class uiButton
+        public class clientButton
         {
             public double xMin { get; set; }
 
@@ -433,8 +443,8 @@ namespace Oxide.Plugins
                                     endpos:none 
                                      */
 
-                                    //uiButton - fill btn with chat args
-                                    var btn = new uiButton
+                                    //clientButton - fill btn with chat args
+                                    var btn = new clientButton
                                     {
                                         xMin = Convert.ToInt16(givenArgs["xpos"]),
                                         yMin = Convert.ToInt16(givenArgs["ypos"]),
@@ -462,7 +472,7 @@ namespace Oxide.Plugins
                                         PrintToConsole($"xMin: {getPos[0]} yMin: {getPos[1]} xMax: {getPos[2]} yMax: {getPos[3]}");
 
 
-                                        //uiButton - update btn with calculated values
+                                        //clientButton - update btn with calculated values
                                         btn.xMin = Math.Round((Convert.ToDouble(getPos[0]) * 1 / 12), 3);           //*xOffset 
                                         btn.yMin = Math.Round((1 - (Convert.ToDouble(getPos[1]) * 1 / 12 * 16 / 9)), 3);     //*yOffset
                                         btn.xMax = Math.Round((Convert.ToDouble(getPos[2]) * 1 / 12), 3);
@@ -503,8 +513,8 @@ namespace Oxide.Plugins
                                     {
                                         Puts("3");
 
-                                        //var page = new List<uiButton>();
-                                        configData.uiPages.Add(currentPage, new List<uiButton>()); //??? list without name #yes pointer should be saved in array
+                                        //var page = new List<clientButton>();
+                                        configData.uiPages.Add(currentPage, new List<clientButton>()); //??? list without name #yes pointer should be saved in array
                                         Puts("4");
                                         configData.uiPages[currentPage].Add(btn);
                                         Puts("5");
@@ -582,7 +592,7 @@ namespace Oxide.Plugins
         #region myFunctions
 
 
-        public void containerAddButton(uiButton btn)
+        public void containerAddButton(clientButton btn)
         {
 
             var drawButton = container.Add(new CuiButton //??? is drawButton needed?
@@ -991,14 +1001,14 @@ namespace Oxide.Plugins
                 //adding buttons from config to Pages
                 try
                 {
-                    foreach (uiButton button in configData.uiPages[i])
+                    foreach (clientButton button in configData.uiPages[i])
                     {
                         containerAddButton(button);
                     }
                 }
                 catch
                 {
-                    PrintToChat($"Couldn't fill page {i} with uiButtons from config");
+                    PrintToChat($"Couldn't fill page {i} with clientButtons from config");
                 }
             }
             //========================================================================
@@ -1008,43 +1018,113 @@ namespace Oxide.Plugins
 
             //Grid, close nextPage previousPage addPage button ebi calke panelshia gasatani
 
+            var uiButtonsPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                    Color = "0 0 0 0" //fully transparent
+                },
+                RectTransform = {
+                    AnchorMin = "0 0",
+                    AnchorMax = "1 1"
+                },
+            }, "menu_panel", "clientButtons_panel");
+
             var closeButton = container.Add(new CuiButton
             {
                 Button = {
-                    Command = "menu_close " + player.userID.ToString(),
-                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "1 0 0 1"
-                },
+                        Command = "menu_close " + player.userID.ToString(),
+                        //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                        Color = "1 0 0 1"
+                    },
                 RectTransform = {
-                    AnchorMin = "0.9 0.95",
-                    AnchorMax = "1 1"
-                },
+                        AnchorMin = "0.9 0.95",
+                        AnchorMax = "1 1"
+                    },
                 Text = {
-                    Text = "X",
-                    FontSize = 10,
-                    Align = UnityEngine.TextAnchor.MiddleCenter,
-                }
-            }, menuPanel, "close_button");
+                        Text = "X",
+                        FontSize = 10,
+                        Align = UnityEngine.TextAnchor.MiddleCenter,
+                    }
+            }, uiButtonsPanel, "close_button");
 
+
+
+            var prevPage = container.Add(new CuiButton
+            {
+                Button = {
+                                            Command = "prev_page " + player.userID.ToString(),
+                                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                            Color = "0 1 0 1"
+                                        },
+                RectTransform = {
+                                            AnchorMin = "0.6 0",
+                                            AnchorMax = "0.7 0.1"
+                                        },
+                Text = {
+                                            Text = "prevPage",
+                                            FontSize = 20,
+                                            Align = UnityEngine.TextAnchor.MiddleCenter,
+                                        },
+
+            }, uiButtonsPanel, "prev_page_button");
+
+            var addPageButton = container.Add(new CuiButton
+            {
+                Button = {
+                                Command = "add_page " + player.userID.ToString(),
+                                //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                Color = "0 1 0 1"
+                            },
+                RectTransform = {
+                                AnchorMin = "0.7 0",
+                                AnchorMax = "0.8 0.1"
+                            },
+                Text = {
+                                Text = "addPage",
+                                FontSize = 20,
+                                Align = UnityEngine.TextAnchor.MiddleCenter,
+                            },
+
+            }, uiButtonsPanel, "add_page_button");
+
+            var nextPage = container.Add(new CuiButton
+            {
+                Button = {
+                                    Command = "next_page " + player.userID.ToString(),
+                                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                                    Color = "0 1 0 1"
+                                },
+                RectTransform = {
+                                    AnchorMin = "0.8 0",
+                                    AnchorMax = "0.9 0.1"
+                                },
+                Text = {
+                                    Text = "nextPage",
+                                    FontSize = 20,
+                                    Align = UnityEngine.TextAnchor.MiddleCenter,
+                                },
+
+            }, uiButtonsPanel, "next_page_button");
 
             var gridButton = container.Add(new CuiButton
             {
                 Button = {
-                    Command = "show_grid " + player.userID.ToString(),
-                    //Command = string.Format("menu_close {0} {1}",arg1, arg2),
-                    Color = "0 1 0 1"
-                },
+                            Command = "show_grid " + player.userID.ToString(),
+                            //Command = string.Format("menu_close {0} {1}",arg1, arg2),
+                            Color = "0 1 0 1"
+                        },
                 RectTransform = {
-                    AnchorMin = "0.9 0",
-                    AnchorMax = "1 0.1"
-                },
+                            AnchorMin = "0.9 0",
+                            AnchorMax = "1 0.1"
+                        },
                 Text = {
-                    Text = "Grid",
-                    FontSize = 20,
-                    Align = UnityEngine.TextAnchor.MiddleCenter,
-                },
+                            Text = "Grid",
+                            FontSize = 20,
+                            Align = UnityEngine.TextAnchor.MiddleCenter,
+                        },
 
-            }, menuPanel, "grid_button");
+            }, uiButtonsPanel, "grid_button");
+
 
             //var blurredElement = new CuiElement 
             //{ 
