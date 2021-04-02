@@ -143,8 +143,8 @@ namespace Oxide.Plugins
             public Boolean[,] aviabilityMatrix;          //!! this should be saved in data not in config
             public Boolean aviabilityIsCreated = false;  //!! this should be saved in data not in config
 
-            public int PageCount = 1; //starting default value
-
+            public int pageCount = 1; //starting default value
+            public int currentPage = 1; //I dont know what default value should be I thinks some info page
             public Dictionary<int, List<clientButton>> uiPages = new Dictionary<int, List<clientButton>>();
 
             //all default values should be loaded from here, and than updated and saved if necessary!!!
@@ -164,14 +164,16 @@ namespace Oxide.Plugins
             {"blue",  "0 0 1 1" }
         };
 
+        private Dictionary<int, bool> isPageGenerated = new Dictionary<int, bool>();
+
+
         Boolean menuIsOpen = false;
         Boolean gridIsOpen = false;
         Boolean menuIsCreated = false;
         Boolean gridIsCreated = false;
         Boolean refreshMenu = false;
-        int currentPage = 0; // starting default value
 
-        //when user changes or adds pages, currentPage and PageCount values should be updated and SAVED IN CONFIG
+        //when user changes or adds pages, currentPage and pageCount values should be updated and SAVED IN CONFIG
 
         //function to insert new button_panel //Page  after last Page,   before interface buttons panel
 
@@ -340,9 +342,21 @@ namespace Oxide.Plugins
         //===================================== debug or info commands ================================================ 
 
         [ChatCommand("config")]
-        void confTest(BasePlayer player)
+        void confTest(BasePlayer player, string command, string[] args)
         {
             SendReply(player, configData.devName);
+            switch (args[0])
+            {
+                case "aaxvevine":
+                    PrintToChat("naxui");
+                    CuiHelper.DestroyUi(player, "client_buttons_panel_0");
+                    break;
+                case "maaxvevine":
+                    PrintToChat("modi");
+                    CuiHelper.DestroyUi(player, "menu_panel");
+                    CuiHelper.AddUi(player, container);
+                    break;
+            }
         }
 
 
@@ -521,10 +535,8 @@ namespace Oxide.Plugins
 
                                     }
 
-
-                                    //draw it (add btn in current Page containercontainerUpdate
-
-                                    containerAddButton(btn);
+                                    //adding button in client_buttons_panel{currentPage}
+                                    addClientButton(btn,configData.currentPage);
 
                                     refreshMenu = true;
 
@@ -534,11 +546,12 @@ namespace Oxide.Plugins
                                     //DONE when you have xPos and yPos you should calculate xEnd yEnd based on width/height
                                     //DONE draw this bitches from config at startup
 
+                                    //savind button info in config
                                     Puts("1");
                                     try
                                     {
                                         Puts("1.5");
-                                        configData.uiPages[currentPage].Add(btn); //if this doesnot exist, create new one
+                                        configData.uiPages[configData.currentPage].Add(btn); //if this doesnot exist, create new one
                                         Puts("2");
                                     }
                                     catch
@@ -546,9 +559,9 @@ namespace Oxide.Plugins
                                         Puts("3");
 
                                         //var page = new List<clientButton>();
-                                        configData.uiPages.Add(currentPage, new List<clientButton>()); //??? list without name #yes pointer should be saved in array
+                                        configData.uiPages.Add(configData.currentPage, new List<clientButton>()); //??? list without name #yes pointer should be saved in array
                                         Puts("4");
-                                        configData.uiPages[currentPage].Add(btn);
+                                        configData.uiPages[configData.currentPage].Add(btn);
                                         Puts("5");
                                     }
                                     Puts("6");
@@ -561,8 +574,12 @@ namespace Oxide.Plugins
                             case "text":
                                 //adding textfunctionality
                                 break;
-                            case "page":
-
+                            case "page": //here comes addPage button from ui
+                                //adding brand new page at last position
+                                configData.pageCount++;
+                                configData.currentPage = configData.pageCount; //switching to new page
+                                SaveConfig(configData);
+                                generate_page(configData.pageCount);
                                 break;
                         }
                         break;
@@ -670,10 +687,10 @@ namespace Oxide.Plugins
             switch (cmdArgs.Args[0])
             {
                 case "pagecount":
-                    configData.PageCount++;
-                    PrintToConsole($"pagecount: {configData.PageCount}");
+                    configData.pageCount++;
+                    PrintToConsole($"pagecount: {configData.pageCount}");
                     SaveConfig(configData);
-                    PrintToConsole($"pagecount after saving : {configData.PageCount}");
+                    PrintToConsole($"pagecount after saving : {configData.pageCount}");
 
                     break;
                 case "c":
@@ -765,10 +782,11 @@ namespace Oxide.Plugins
 
         }
         //Task update config when adding page
+        /*
         [ConsoleCommand("add_page")]
         private void cmd_addPage(ConsoleSystem.Arg Args)
         {
-            configData.PageCount++;
+            configData.pageCount++; //ara ese ara
             SaveConfig(configData);
             //generate buttons page and add to container
             var newButtonsPanel = container.Add(new CuiPanel
@@ -780,17 +798,32 @@ namespace Oxide.Plugins
                         AnchorMin = "0 0",
                         AnchorMax = "1 1"
                     },
-            }, "pages_panel", $"buttons_panel_{configData.PageCount}");
+            }, "pages_panel", $"client_buttons_panel_{configData.pageCount}");
 
-            Puts($"generated_buttons_panel_{configData.PageCount}");
+            Puts($"generated: client_buttons_panel_{configData.pageCount}");
         }
-
+        */
         //nextPage, prevPage, specificPage should run with argument which page should be rendered
         [ConsoleCommand("switch_page")]
         private void cmd_switchPage(ConsoleSystem.Arg cmdArgs)
         {
-            int currentPage = Convert.ToInt32(cmdArgs.Args[0]);
+            int wishedPage = Convert.ToInt32(cmdArgs.Args[0]);
+            //I think we have acces to currentPage here, anyways we should! you could pass it in args[1]
             //?move menu data in dictionary, gridIsShown, mouseOn, Page and then refresh menu, on refresh function should note and render menu based on those properties
+
+            //validate if correct page is requested
+            if (!isPageGenerated[wishedPage])
+            {
+                generate_page(wishedPage);
+                //gaachine wishedPage addCui...
+                //refresh ui to show up new page
+            }
+            else
+            {
+                //addui $"client_buttons_panel_{wishedPage}" ramenairad gaachine da Destroy ebuli ukve generirebuli peiji
+                //refreshze wishedPage agar amoshalo danarcheni yvela page amoshale
+            }
+            //destroy currentPage
         }
         #endregion
 
@@ -918,10 +951,10 @@ namespace Oxide.Plugins
 
 
 
-        public void containerAddButton(clientButton btn)
+        public void addClientButton(clientButton btn, int pageNumber)
         {
 
-            var drawButton = container.Add(new CuiButton //??? is drawButton needed?
+            var clientButton = container.Add(new CuiButton //??? is clientButton needed?
             {
                 Button = {
                                             Command = btn.Command,
@@ -938,8 +971,8 @@ namespace Oxide.Plugins
                                             FontSize = btn.FontSize,
                                             Align = UnityEngine.TextAnchor.MiddleCenter, //!!! should be filled from btn
                                         }
-            }, $"buttons_panel_{currentPage}", "draw_button"); //!!! draw_button_{?}
-            Puts($"buttons_panel_{currentPage}");
+            }, $"client_buttons_panel_{pageNumber}", "client_button"); //!!! client_button_{?} ki ki undo xom dagvchirdeba
+            Puts($"client_buttons_panel_{pageNumber}");
         }
 
         //my function that creates CuiElement from CuiPanel
@@ -1067,7 +1100,8 @@ namespace Oxide.Plugins
         //generating menu at startup from config/data file
         void generate_menu(BasePlayer player)
         {
-
+            //======================= Main Layer ===========================
+            //creating main panel for menu
             var menuPanel = container.Add(new CuiPanel
             {
                 Image = {
@@ -1083,7 +1117,8 @@ namespace Oxide.Plugins
             }, "Hud", "menu_panel");
             PrintToConsole("created menu");
 
-            //========================================================================
+            //========================= Grid Layer ===============================================
+            //creating panel for grid lines
             var gridPanel = container.Add(new CuiPanel
             {
                 Image = {
@@ -1095,8 +1130,8 @@ namespace Oxide.Plugins
                 },
             }, "menu_panel", "grid_panel");
 
-            //========================================================================
-            //creating Pages layer panel
+            //=========================== Pages Layer =============================================
+            //creating main layer for all butoons panels
             var pagesPanel = container.Add(new CuiPanel
             {
                 Image = {
@@ -1108,42 +1143,13 @@ namespace Oxide.Plugins
                 },
             }, "menu_panel", "pages_panel");
 
-            for (int i = 0; i < configData.PageCount; i++)
-            {
-                var buttonsPanel = container.Add(new CuiPanel
-                {
-                    Image = {
-                        Color = "0 0 0 0" //fully transparent
-                    },
-                    RectTransform = {
-                        AnchorMin = "0 0",
-                        AnchorMax = "1 1"
-                    },
-                }, "pages_panel", $"buttons_panel_{i}");
-
-                Puts($"generated_buttons_panel_{i}");
-
-
-                //adding buttons from config to Pages
-                try
-                {
-                    foreach (clientButton button in configData.uiPages[i])
-                    {
-                        containerAddButton(button);
-                    }
-                }
-                catch
-                {
-                    PrintToChat($"Couldn't fill page {i} with clientButtons from config");
-                }
-            }
             //========================================================================
-
-
-
+            //generating page from configData.currentPage on menu open
+            generate_page(configData.currentPage);
 
             //Grid, close nextPage previousPage addPage button ebi calke panelshia gasatani
 
+            //=========================== UI buttons Layer =============================================
             var uiButtonsPanel = container.Add(new CuiPanel
             {
                 Image = {
@@ -1153,8 +1159,10 @@ namespace Oxide.Plugins
                     AnchorMin = "0 0",
                     AnchorMax = "1 1"
                 },
-            }, "menu_panel", "clientButtons_panel");
+            }, "menu_panel", "uiButtons_panel");
 
+            //========================== UI Buttons ========================
+            #region UiButtons
             var closeButton = container.Add(new CuiButton
             {
                 Button = {
@@ -1251,6 +1259,7 @@ namespace Oxide.Plugins
 
             }, uiButtonsPanel, "grid_button");
 
+            #endregion
 
             //var blurredElement = new CuiElement 
             //{ 
@@ -1264,6 +1273,42 @@ namespace Oxide.Plugins
             //container.Add(blurredElement);
         }
 
+        void generate_page(int pageNumber)
+        {
+
+            //configData.pageCount
+            //Docs: creating panel to wrap up buttons
+            var clientButtonsPanel = container.Add(new CuiPanel
+            {
+                Image = {
+                        Color = "0 0 0 0" //fully transparent
+                    },
+                RectTransform = {
+                        AnchorMin = "0 0",
+                        AnchorMax = "1 1"
+                    },
+            }, "pages_panel", $"client_buttons_panel_{pageNumber}");
+
+            Puts($"generated: client_buttons_panel_{pageNumber}");
+
+
+            //adding buttons from config to client_buttons_panel
+            try
+            {
+                foreach (clientButton button in configData.uiPages[pageNumber])
+                {
+                    addClientButton(button,pageNumber);
+                }
+            }
+            catch
+            {
+                PrintToChat($"Couldn't fill page {pageNumber} with clientButtons from config");
+            }
+
+            //denote that this pageNumber is already generated
+            isPageGenerated.Add(pageNumber, true);
+            //? send something? send client_buttons_panel_pageNumber to player
+        }
 
     }
 
