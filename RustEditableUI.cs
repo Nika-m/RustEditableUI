@@ -126,10 +126,17 @@ namespace Oxide.Plugins
             14. maybe settings gear icon that opens up menu settings
             15. set custom menu size on screen and grid size
             16. move config objects in DATA
+            17. there should be some deffault settings for menu gridSize, menusize and aviability should be generated on menu open based on default gridsize
 
         ----------------------------------------------------------------------------------------------------*/
+        /*=================================== Bugs ===================================
+            1. if grid is not generated after first run, you cant add buttons because aviability is generated in generate_grid function
+            2. add_page is duplicated
+
+        ------------------------------------------------------------------------------*/
         #endregion
         #region config
+        //=================================== configData ===================================
 
         //Okay.. Lets take this slow and easy
         // Fist lets Declare the config as configData and write whats in it
@@ -149,33 +156,6 @@ namespace Oxide.Plugins
 
             //all default values should be loaded from here, and than updated and saved if necessary!!!
         }
-
-        //when defining new grid, aviability matrix should be created from sctrach and than saved in config
-        //else for default case aviability matrix should be created from current gridScale and saved;
-
-        //Plugins default values 
-        private Dictionary<string, string> ColorLib = new Dictionary<string, string>
-        {
-            {"transparent", "0 0 0 0" },
-            {"black", "0 0 0 1" },
-            {"white", "1 1 1 1" },
-            {"red",   "1 0 0 1" },
-            {"green", "0 1 0 1" },
-            {"blue",  "0 0 1 1" }
-        };
-
-        private Dictionary<int, bool> isPageGenerated = new Dictionary<int, bool>();
-
-
-        Boolean menuIsOpen = false;
-        Boolean gridIsOpen = false;
-        Boolean menuIsCreated = false;
-        Boolean gridIsCreated = false;
-        Boolean refreshMenu = false;
-
-        //when user changes or adds pages, currentPage and pageCount values should be updated and SAVED IN CONFIG
-
-        //function to insert new button_panel //Page  after last Page,   before interface buttons panel
 
 
 
@@ -217,6 +197,38 @@ namespace Oxide.Plugins
         {
             Config.WriteObject(config, true);
         }
+
+        //when defining new grid, aviability matrix should be created from sctrach and than saved in config
+        //else for default case aviability matrix should be created from current gridScale and saved;
+        //----------------------------------------------------------------------
+
+        //=================================== Plugin variables ===================================
+        //Plugins default values 
+        private Dictionary<string, string> ColorLib = new Dictionary<string, string>
+        {
+            {"transparent", "0 0 0 0" },
+            {"black", "0 0 0 1" },
+            {"white", "1 1 1 1" },
+            {"red",   "1 0 0 1" },
+            {"green", "0 1 0 1" },
+            {"blue",  "0 0 1 1" }
+        };
+
+        private Dictionary<int, bool> isPageGenerated = new Dictionary<int, bool>();
+
+
+
+        Boolean menuIsOpen = false;
+        Boolean gridIsOpen = false;
+        Boolean menuIsCreated = false;
+        Boolean gridIsCreated = false;
+
+
+        //when user changes or adds pages, currentPage and pageCount values should be updated and SAVED IN CONFIG
+
+        //function to insert new button_panel //Page  after last Page,   before interface buttons panel
+
+
 
         #endregion
 
@@ -425,7 +437,7 @@ namespace Oxide.Plugins
                                     //   double xMinDone = 0, yMinDone = 0, xMaxDone = 0, yMaxDone = 0;
 
 
-                                    //create string of all values
+                                    //Docs: creating full string with all arguments
                                     string myArgs = "";
                                     for (int i = 3; i < args.Length; i++)
                                     {
@@ -441,6 +453,8 @@ namespace Oxide.Plugins
                                     //menu add button xpos:4 ypos:5 width:4 higth:2
                                     //menu add button width:4 heigth:2              askAviability w/h
                                     //??? menu add button xend:10 yend:10           askAviability ???
+
+                                    //Docs: splicing arguments fullString and updating givenArgs with given arguments 
                                     string key, value;
                                     for (int i = 2; i < args.Length; i++)
                                     {
@@ -453,7 +467,7 @@ namespace Oxide.Plugins
                                     }
 
                                     //+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-                                    PrintToConsole("pringing dictionary");
+                                    PrintToConsole("printing given arguments dictionary");
                                     foreach (KeyValuePair<string, string> prop in givenArgs)
                                     {
                                         PrintToConsole($"Key: {prop.Key} Value: {prop.Value}");
@@ -488,7 +502,7 @@ namespace Oxide.Plugins
                                     height:2
                                     endpos:none 
                                      */
-
+                                    PrintToConsole("trying to fill clientButton class");
                                     //clientButton - fill btn with chat args
                                     var btn = new clientButton
                                     {
@@ -508,6 +522,7 @@ namespace Oxide.Plugins
                                         Offset = Convert.ToInt16(givenArgs["offset"])
                                         //....
                                     };
+                                    PrintToConsole("filled clientButton class instance btn with givenArgs");
 
                                     // search should start from 0 0 and xPos yPos should be returned from aviability
                                     if (btn.xMin == -1)
@@ -534,11 +549,11 @@ namespace Oxide.Plugins
                                         //update Aviability with xPos yPos xEnd yEnd
 
                                     }
-
+                                    PrintToConsole("came here");
                                     //adding button in client_buttons_panel{currentPage}
-                                    addClientButton(btn,configData.currentPage);
+                                    addClientButton(btn, configData.currentPage);
 
-                                    refreshMenu = true;
+
 
                                     //DONE SAVE IT
                                     //DONE add button to current panel, in config
@@ -568,7 +583,7 @@ namespace Oxide.Plugins
                                     SaveConfig(configData);
                                     Puts("7");
 
-
+                                    refresh_menu(player);
                                 }
                                 break;
                             case "text":
@@ -576,10 +591,16 @@ namespace Oxide.Plugins
                                 break;
                             case "page": //here comes addPage button from ui
                                 //adding brand new page at last position
-                                configData.pageCount++;
-                                configData.currentPage = configData.pageCount; //switching to new page
+                                PrintToConsole($"pageCount before: {configData.pageCount}");
+                                var newPage = configData.pageCount++; // does it add up?
+                                PrintToConsole($"newPage: {newPage} pageCount: {configData.pageCount}");
+                                //switching to new page /? this should be done with switchPage
                                 SaveConfig(configData);
-                                generate_page(configData.pageCount);
+                                generate_page(newPage);
+                                switch_page(newPage, player);
+
+                                //? remove existing page? 
+                                //? and refresh?
                                 break;
                         }
                         break;
@@ -591,51 +612,23 @@ namespace Oxide.Plugins
                         break;
                     case "mouseOn":
                         rust.RunServerCommand("containerUpdate true");
-                        refreshMenu = true;
+                        refresh_menu(player);
+                        //return 
                         break;
                     case "mouseOff":
                         rust.RunServerCommand("containerUpdate false");
-                        refreshMenu = true;
+                        refresh_menu(player);
+                        //return
                         break;
                 }
             }
-
-
-            if (refreshMenu)
-            {
-                CuiHelper.DestroyUi(player, "menu_panel");
-                CuiHelper.AddUi(player, container);
-                if (!gridIsOpen) //check
-                {
-                    CuiHelper.DestroyUi(player, "grid_panel");
-                }
-                refreshMenu = false;
-                return;
-            }
-
-            if (menuIsOpen)
-            {
-                CuiHelper.DestroyUi(player, "menu_panel");
-                menuIsOpen = false;
-            }
             else
             {
-                if (!menuIsCreated)
-                {
-                    generate_menu(player);
-                    menuIsCreated = true;
-                }
+                PrintToConsole($"toggling menu, menuIsOpen {menuIsOpen}");
 
-
-                CuiHelper.AddUi(player, container);
-                if (!gridIsOpen)
-                {
-                    CuiHelper.DestroyUi(player, "grid_panel");
-                }
-                menuIsOpen = true;
+                PrintToConsole($"toggling menu2, menuIsOpen {menuIsOpen}");
+                toggle_menu(player);
             }
-
-
         }
 
 
@@ -737,9 +730,9 @@ namespace Oxide.Plugins
         }
 
         [ConsoleCommand("menu_close")]
-        private void cmd_menuClose(ConsoleSystem.Arg Args)
+        private void cmd_menuClose(ConsoleSystem.Arg cmdArgs)
         {
-            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[0]));
             //var player = Args.Player();
             //var player = arg.Connection.player as BasePlayer;
             //var player = Args.Connection.player as BasePlayer;
@@ -753,9 +746,9 @@ namespace Oxide.Plugins
         }
 
         [ConsoleCommand("show_grid")]
-        private void cmd_showGrid(ConsoleSystem.Arg Args)
+        private void cmd_showGrid(ConsoleSystem.Arg cmdArgs)
         {
-            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(Args.Args[0]));
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[0]));
             //var player = Args.Player();
             //var player = arg.Connection.player as BasePlayer;
             //var player = Args.Connection.player as BasePlayer;
@@ -804,26 +797,45 @@ namespace Oxide.Plugins
         }
         */
         //nextPage, prevPage, specificPage should run with argument which page should be rendered
-        [ConsoleCommand("switch_page")]
-        private void cmd_switchPage(ConsoleSystem.Arg cmdArgs)
-        {
-            int wishedPage = Convert.ToInt32(cmdArgs.Args[0]);
-            //I think we have acces to currentPage here, anyways we should! you could pass it in args[1]
-            //?move menu data in dictionary, gridIsShown, mouseOn, Page and then refresh menu, on refresh function should note and render menu based on those properties
 
-            //validate if correct page is requested
-            if (!isPageGenerated[wishedPage])
+        [ConsoleCommand("add_page")]
+        private void cmd_addPage(ConsoleSystem.Arg cmdArgs)
+        {
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[0]));
+            //adding brand new page at last position
+            PrintToConsole($"pageCount before: {configData.pageCount}");
+            var newPage = ++configData.pageCount; // does it add up?
+            PrintToConsole($"newPage: {newPage} pageCount: {configData.pageCount}");
+            //switching to new page /? this should be done with switchPage
+            SaveConfig(configData);
+            generate_page(newPage);
+            switch_page(newPage, player);
+
+            //? remove existing page? 
+            //? and refresh?
+        }
+        [ConsoleCommand("change_page")]
+        private void cmd_changePage(ConsoleSystem.Arg cmdArgs)
+        {
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[1]));
+            int wishedPage = Convert.ToInt32(cmdArgs.Args[0]);
+            if (wishedPage == -1)
             {
-                generate_page(wishedPage);
-                //gaachine wishedPage addCui...
-                //refresh ui to show up new page
+                switch (cmdArgs.Args[2])
+                {
+                    case "nextPage":
+                        switch_page(configData.currentPage + 1, player);
+                        break;
+                    case "prevPage":
+                        switch_page(configData.currentPage - 1, player);
+                        break;
+                }
             }
             else
             {
-                //addui $"client_buttons_panel_{wishedPage}" ramenairad gaachine da Destroy ebuli ukve generirebuli peiji
-                //refreshze wishedPage agar amoshalo danarcheni yvela page amoshale
+                switch_page(wishedPage, player);
             }
-            //destroy currentPage
+
         }
         #endregion
 
@@ -972,7 +984,7 @@ namespace Oxide.Plugins
                                             Align = UnityEngine.TextAnchor.MiddleCenter, //!!! should be filled from btn
                                         }
             }, $"client_buttons_panel_{pageNumber}", "client_button"); //!!! client_button_{?} ki ki undo xom dagvchirdeba
-            Puts($"client_buttons_panel_{pageNumber}");
+            Puts($"added client button to client_buttons_panel_{pageNumber}");
         }
 
         //my function that creates CuiElement from CuiPanel
@@ -1142,7 +1154,7 @@ namespace Oxide.Plugins
                     AnchorMax = "1 1"
                 },
             }, "menu_panel", "pages_panel");
-
+            //----------------------------------------------------------------------
             //========================================================================
             //generating page from configData.currentPage on menu open
             generate_page(configData.currentPage);
@@ -1186,7 +1198,7 @@ namespace Oxide.Plugins
             var prevPage = container.Add(new CuiButton
             {
                 Button = {
-                                            Command = "prev_page " + player.userID.ToString(),
+                                            Command = $"change_page {player.userID.ToString()} {"-1"} {"prevPage"}",
                                             //Command = string.Format("menu_close {0} {1}",arg1, arg2),
                                             Color = "0 1 0 1"
                                         },
@@ -1224,7 +1236,7 @@ namespace Oxide.Plugins
             var nextPage = container.Add(new CuiButton
             {
                 Button = {
-                                    Command = "next_page " + player.userID.ToString(),
+                                    Command = $"change_page {player.userID.ToString()} {"-1"} {"nextPage"}",
                                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
                                     Color = "0 1 0 1"
                                 },
@@ -1297,7 +1309,7 @@ namespace Oxide.Plugins
             {
                 foreach (clientButton button in configData.uiPages[pageNumber])
                 {
-                    addClientButton(button,pageNumber);
+                    addClientButton(button, pageNumber);
                 }
             }
             catch
@@ -1310,6 +1322,73 @@ namespace Oxide.Plugins
             //? send something? send client_buttons_panel_pageNumber to player
         }
 
+        void switch_page(int wishedPage, BasePlayer player)
+        {
+            int currentPage = configData.currentPage;
+            //I think we have acces to currentPage here, anyways we should! you could pass it in args[1]
+            //?move menu data in dictionary, gridIsShown, mouseOn, Page and then refresh menu, on refresh function should note and render menu based on those properties
+
+            //validate if correct page is requested
+            PrintToConsole($"isPageGenerated: {!isPageGenerated[wishedPage]}");
+            if (!isPageGenerated[wishedPage])
+            {
+                generate_page(wishedPage);
+            }
+            //uncorrect: gaachine wishedPage addCui... //answ: ar gamodis egre, unda darefreshdes meniu da yvela waishalos garda wishedPage
+            //uncorrect: addui $"client_buttons_panel_{wishedPage}" ramenairad gaachine da Destroy ebuli ukve generirebuli peiji
+            //uncorrect: destroy currentPage and new page automatically shows up //answ: ar gamodis egre axali page rom gamochndes menu unda darefreshdes da refreshis dros yvelaferi renderdeba rac containershia, amitom ubralos wishedPage is garda yvela unda waishalos (uketesi iqneboda mogvenishna rogorc hidden)
+            //correct: refresh ui to show up new page
+            //correct: refreshze wishedPage agar amoshalo danarcheni yvela page amoshale
+
+
+
+            //UPDATE CONFIG
+            configData.currentPage = wishedPage;
+            SaveConfig(configData);
+
+            refresh_menu(player);
+        }
+
+        void toggle_menu(BasePlayer player)
+        {
+            if (menuIsOpen)
+            {
+                CuiHelper.DestroyUi(player, "menu_panel");
+            }
+            else
+            {
+                if (!menuIsCreated)
+                {
+                    generate_menu(player);
+                    menuIsCreated = true;
+                }
+                refresh_menu(player);
+            }
+            menuIsOpen = !menuIsOpen;
+        }
+
+        void refresh_menu(BasePlayer player)
+        {
+
+            CuiHelper.DestroyUi(player, "menu_panel");
+            CuiHelper.AddUi(player, container);
+            //check grid
+            if (gridIsOpen == false)
+            {
+                CuiHelper.DestroyUi(player, "grid_panel");
+            }
+            for (var i = 1; i <= configData.pageCount; i++)
+            {
+                if (i != configData.currentPage) //currentPage works as isPageVisible, I thinks so
+                {
+                    CuiHelper.DestroyUi(player, $"client_buttons_panel_{i}");
+                }
+            }
+            //choose which page is visible
+            //$$
+
+
+        }
     }
 
 
