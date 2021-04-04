@@ -132,6 +132,9 @@ namespace Oxide.Plugins
         /*=================================== Bugs ===================================
             1. if grid is not generated after first run, you cant add buttons because aviability is generated in generate_grid function
             2. add_page is duplicated
+            3. added pages that doesnot contain buttons, arenot visible in config, but they appeared in game
+            4. every page needs its own aviability, now one aviability matrix is shared over all pages
+            5. pageswitching works but not properly, every page switch we just refresh ui and remove all nonWanted pages and other ones flicker
 
         ------------------------------------------------------------------------------*/
         #endregion
@@ -549,7 +552,7 @@ namespace Oxide.Plugins
                                         //update Aviability with xPos yPos xEnd yEnd
 
                                     }
-                                    PrintToConsole("came here");
+
                                     //adding button in client_buttons_panel{currentPage}
                                     addClientButton(btn, configData.currentPage);
 
@@ -817,9 +820,10 @@ namespace Oxide.Plugins
         [ConsoleCommand("change_page")]
         private void cmd_changePage(ConsoleSystem.Arg cmdArgs)
         {
-            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[1]));
-            int wishedPage = Convert.ToInt32(cmdArgs.Args[0]);
-            if (wishedPage == -1)
+            BasePlayer player = BasePlayer.FindByID(System.Convert.ToUInt64(cmdArgs.Args[0]));
+            int wishedPage = Convert.ToInt32(cmdArgs.Args[1]);
+            PrintToConsole($"change_page vars wishedPage: {wishedPage} lastArg: {cmdArgs.Args[2]}");
+            if (wishedPage == 10000)
             {
                 switch (cmdArgs.Args[2])
                 {
@@ -833,7 +837,8 @@ namespace Oxide.Plugins
             }
             else
             {
-                switch_page(wishedPage, player);
+                //I have no idea why I wrote this here
+                //switch_page(wishedPage, player);
             }
 
         }
@@ -1198,7 +1203,7 @@ namespace Oxide.Plugins
             var prevPage = container.Add(new CuiButton
             {
                 Button = {
-                                            Command = $"change_page {player.userID.ToString()} {"-1"} {"prevPage"}",
+                                            Command = $"change_page {player.userID.ToString()} 10000 prevPage",
                                             //Command = string.Format("menu_close {0} {1}",arg1, arg2),
                                             Color = "0 1 0 1"
                                         },
@@ -1217,7 +1222,7 @@ namespace Oxide.Plugins
             var addPageButton = container.Add(new CuiButton
             {
                 Button = {
-                                Command = "add_page " + player.userID.ToString(),
+                                Command = $"add_page {player.userID.ToString()} 10000 nextPage",
                                 //Command = string.Format("menu_close {0} {1}",arg1, arg2),
                                 Color = "0 1 0 1"
                             },
@@ -1236,7 +1241,7 @@ namespace Oxide.Plugins
             var nextPage = container.Add(new CuiButton
             {
                 Button = {
-                                    Command = $"change_page {player.userID.ToString()} {"-1"} {"nextPage"}",
+                                    Command = $"change_page {player.userID.ToString()} 10000 nextPage",
                                     //Command = string.Format("menu_close {0} {1}",arg1, arg2),
                                     Color = "0 1 0 1"
                                 },
@@ -1324,13 +1329,17 @@ namespace Oxide.Plugins
 
         void switch_page(int wishedPage, BasePlayer player)
         {
-            int currentPage = configData.currentPage;
             //I think we have acces to currentPage here, anyways we should! you could pass it in args[1]
             //?move menu data in dictionary, gridIsShown, mouseOn, Page and then refresh menu, on refresh function should note and render menu based on those properties
 
-            //validate if correct page is requested
-            PrintToConsole($"isPageGenerated: {!isPageGenerated[wishedPage]}");
-            if (!isPageGenerated[wishedPage])
+            //VALIDATE if correct page is requested
+            if (wishedPage > configData.pageCount || wishedPage < 1)
+            {
+                PrintToConsole("//$$");
+                return;
+            }
+
+            if (!isPageGenerated.ContainsKey(wishedPage))
             {
                 generate_page(wishedPage);
             }
