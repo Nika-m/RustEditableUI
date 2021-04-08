@@ -28,7 +28,13 @@
 
         ----------------------------------------------------------------------------------------------------*/
 
+============================ Plugin Description ================================
 
+Allows server admins to moderate users using a GUI from within the game
+Gives admins/players ability to create/edit custom GUI from within game
+InGame User Interface creator/editor
+
+------------------------------------------------------------
 menu │add 	│button color:red text:what i want autoclose:true
      │remove	│panel 
       edit	 defaults width:5

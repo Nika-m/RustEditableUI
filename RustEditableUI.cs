@@ -137,6 +137,12 @@ namespace Oxide.Plugins
             5. pageswitching works but not properly, every page switch we just refresh ui and remove all nonWanted pages and other ones flicker
 
         ------------------------------------------------------------------------------*/
+        /*=================================== Wierd Info ==================================
+
+            menu_panel created on menu startup and menu_panel created after mouseOn/off menu refresh are different panels
+            FadeOut property is directly in CuiPanel FadeIn property is inside image{} object in CuiPanel
+            element to fade out it should be DestroyUI-ed dirrectly, if paren is destroyed child wont fade out
+        ----------------------------------------------------------------------*/
         #endregion
         #region config
         //=================================== configData ===================================
@@ -218,6 +224,7 @@ namespace Oxide.Plugins
         };
 
         private Dictionary<int, bool> isPageGenerated = new Dictionary<int, bool>();
+        private Dictionary<int, int> pagePosInContainer = new Dictionary<int, int>();
 
 
 
@@ -356,20 +363,24 @@ namespace Oxide.Plugins
 
         //===================================== debug or info commands ================================================ 
 
-        [ChatCommand("config")]
+        [ChatCommand("plugin")]
         void confTest(BasePlayer player, string command, string[] args)
         {
             SendReply(player, configData.devName);
             switch (args[0])
             {
-                case "aaxvevine":
-                    PrintToChat("naxui");
-                    CuiHelper.DestroyUi(player, "client_buttons_panel_0");
+                case "destroyPanel":
+                    CuiHelper.DestroyUi(player, $"client_buttons_panel_{args[1]}");
                     break;
-                case "maaxvevine":
-                    PrintToChat("modi");
+                case "refreshMenu":
                     CuiHelper.DestroyUi(player, "menu_panel");
                     CuiHelper.AddUi(player, container);
+                    break;
+                case "removePanel":
+                    int element = System.Convert.ToInt16(args[1]);
+                    container.RemoveAt(element);
+                    PrintToChat($"Removed {element}th element from container");
+                    refresh_menu(player);
                     break;
             }
         }
@@ -660,10 +671,13 @@ namespace Oxide.Plugins
             switch (cmdArgs.Args[0])
             {
                 case "container":
-                    PrintToConsole($"Container size: {container.Count}");
+                    PrintToConsole($"Container elements: {container.Count - 1}");
                     break;
-                case "c":
-
+                case "pages":
+                    foreach (KeyValuePair<int, int> prop in pagePosInContainer)
+                    {
+                        PrintToConsole($"Key: {prop.Key} Value: {prop.Value}");
+                    }
                     break;
                 case "a":
 
@@ -689,7 +703,7 @@ namespace Oxide.Plugins
                     PrintToConsole($"pagecount after saving : {configData.pageCount}");
 
                     break;
-                case "c":
+                case "r":
 
                     break;
                 case "a":
@@ -1046,11 +1060,13 @@ namespace Oxide.Plugins
                 x += 1;
 
                 container.Add(new CuiPanel
+
                 {
+                    //FadeOut = Convert.ToSingle(i * xOffset * 2), here is correct place
                     Image = {
                     Color = "1 1 1 0.5",
                     FadeIn = Convert.ToSingle(i * xOffset * 2)
-                   // FadeOut = Convert.ToSingle(i * xOffset * 2)
+                   //FadeOut = Convert.ToSingle(i * xOffset * 2)
                 },
                     RectTransform = {
                     AnchorMin = (Math.Round((i*xOffset-linewidth/2),3)+" 0"),
@@ -1121,8 +1137,10 @@ namespace Oxide.Plugins
             //creating main panel for menu
             var menuPanel = container.Add(new CuiPanel
             {
+                //FadeOut = 0.5f,  //$$
                 Image = {
-                    Color = "0 0 0 0.5"
+                    Color = "0 0 0 0.5",
+                    //FadeIn = 0.5f //$$
                 },
                 RectTransform = {
                     AnchorMin = "0.2 0.2",
@@ -1292,7 +1310,8 @@ namespace Oxide.Plugins
 
         void generate_page(int pageNumber)
         {
-
+            //Docs: capturing data, on which position in container list is new Page Panel added
+            pagePosInContainer.Add(pageNumber, container.Count);
             //configData.pageCount
             //Docs: creating panel to wrap up buttons
             var clientButtonsPanel = container.Add(new CuiPanel
@@ -1354,7 +1373,7 @@ namespace Oxide.Plugins
             //UPDATE CONFIG
             configData.currentPage = wishedPage;
             SaveConfig(configData);
-
+            mutate_container();
             refresh_menu(player);
         }
 
@@ -1386,17 +1405,62 @@ namespace Oxide.Plugins
             {
                 CuiHelper.DestroyUi(player, "grid_panel");
             }
+
+            //destroy all pages that you dont want to be visible
+            /*
             for (var i = 1; i <= configData.pageCount; i++)
             {
-                if (i != configData.currentPage) //currentPage works as isPageVisible, I thinks so
+                if (i != configData.currentPage) //currentPage works as isPageVisible because currentPage is always set as current or intended page to show
                 {
-                    CuiHelper.DestroyUi(player, $"client_buttons_panel_{i}");
+                    //Docs: now we destroy all other pages except currentPage after the menu is loaded, this creates flicker of other pages while destroying
+                    //CuiHelper.DestroyUi(player, $"client_buttons_panel_{i}");
+                    //Docs: another way is to add empty panel as all other pagePanels before loading menu
+                    // lets try doing it after loading menu to see if it works
+                    //this works it does add empty panel in all unwanted generated page positions in container
+                    
+                   PrintToConsole($"unwanted page positions in container: {pagePosInContainer[i]}");
+                   container[pagePosInContainer[i]]= new CuiElement
+                   {
+                       Name = $"client_buttons_panel_{i}", //i is pageNumber, whereas pagePosInContainer[i] is position in container
+                       Parent = "menu_panel",
+                       Components =
+                       {
+                           new CuiRectTransformComponent()
+                       }
+                   };
+                  
+                    //Docs: another way is to just set transparent color to the panlel, WORKS but only change color of panel, not removes buttons and its alright
+                    
+                    //PrintToConsole($"type of component in cuiElement: {container[pagePosInContainer[i]].Components[0].Type}");
+                    //container[pagePosInContainer[i]].Components[0] = new CuiImageComponent { Color = "0 1 0 1" };
+                    
+                    //Docs: trying to change rectTransform to 0 0
+                    //well it works, now I just need to do it for all unwanted pages before sending Ui to player
+                    //tasks, save this particular cuiElement that you want to hide for further use, remove unwanted ones from container and
+                    //send only the page that is intended for client 
+
+                    //PrintToConsole($"type of component in cuiElement: {container[pagePosInContainer[i]].Components[1].Type}");
+                    //container[pagePosInContainer[i]].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0 0" };
+
                 }
             }
-            //choose which page is visible
-            //$$
+           */
+        }
 
-
+        void mutate_container()
+        {
+            foreach (KeyValuePair<int, int> prop in pagePosInContainer)
+            {
+                if (prop.Key != configData.currentPage)
+                {
+                    //PrintToConsole($"type of component in cuiElement: {container[pagePosInContainer[i]].Components[1].Type}");
+                    container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0 0" };
+                }
+                else
+                {
+                    container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "1 1" };
+                }
+            }
         }
     }
 
