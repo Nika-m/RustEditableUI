@@ -149,7 +149,7 @@ namespace Oxide.Plugins
 
         //Okay.. Lets take this slow and easy
         // Fist lets Declare the config as configData and write whats in it
-        private ConfigData configData;
+        private ConfigData configData; //just added static because I couldn't access it from out of functions /!important
         class ConfigData
         {
             [JsonProperty(PropertyName = "This Awesome Plugin is developed by")]
@@ -161,6 +161,7 @@ namespace Oxide.Plugins
 
             public int pageCount = 1; //starting default value
             public int currentPage = 1; //I dont know what default value should be I thinks some info page
+            public double gridScale = 12; //default value for first time config creation
             public Dictionary<int, List<clientButton>> uiPages = new Dictionary<int, List<clientButton>>();
 
             //all default values should be loaded from here, and than updated and saved if necessary!!!
@@ -225,7 +226,10 @@ namespace Oxide.Plugins
 
         private Dictionary<int, bool> isPageGenerated = new Dictionary<int, bool>();
         private Dictionary<int, int> pagePosInContainer = new Dictionary<int, int>();
-
+        int gridPosInContainer = 0; // when grid is not created it doesnot have posInContainer but here it gives default value 0, may be problem
+        //!important
+        int xLinesCount = 11;  //1/configData.gridScale - 1;
+        int yLinesCount = 6; //(int)1/Math.Floor(configData.gridScale * 16 / 9d) - 1;
 
 
         Boolean menuIsOpen = false;
@@ -360,7 +364,6 @@ namespace Oxide.Plugins
 
         #region ChatCommands
         CuiElementContainer container = new CuiElementContainer(); //global
-
         //===================================== debug or info commands ================================================ 
 
         [ChatCommand("plugin")]
@@ -658,6 +661,7 @@ namespace Oxide.Plugins
             CuiHelper.AddUi(player, filledTemplate);
         }
 
+
         #endregion
 
         #region ConsoleCommands
@@ -772,23 +776,7 @@ namespace Oxide.Plugins
             //if (player == null)
             //   return;
             //CuiHelper.DestroyUi(player, "menu_panel");
-            if (gridIsOpen)
-            {
-                //hide gridPanel from container
-                CuiHelper.DestroyUi(player, "grid_panel");
-                gridIsOpen = false;
-            }
-            else
-            {
-                if (!gridIsCreated)
-                {
-                    generate_grid(player);
-                    gridIsCreated = true;
-                }
-                CuiHelper.DestroyUi(player, "menu_panel");
-                CuiHelper.AddUi(player, container);
-                gridIsOpen = true;
-            }
+            toggle_grid(player);
 
         }
         //Task update config when adding page
@@ -956,9 +944,9 @@ namespace Oxide.Plugins
                     }
                     //here we go after BREAK
 
-                    //calculate correct values using gridscale
+                    //calculate correct values using gridScale
                     //an ise iyos ro matrica igebdes matricul width height da abrunebdes matricul koordinatebs
-                    //da am koordinatebis konvertacia gridscale it garet xdebodes
+                    //da am koordinatebis konvertacia gridScale it garet xdebodes
                     //xPos = x yPos = y xEnd = x*width yEnd = y*heigth
                     // aq kidev erti didi problemaa jigaro, eseti Start da End poziciebi ramdenad
                     // gawyobs shen, Y is reversed in grid, da tanac anchorMin da anchorMax ze unda midiodes
@@ -1037,36 +1025,36 @@ namespace Oxide.Plugins
         }
 
 
-        void generate_grid(BasePlayer player, double gridscale = 12, double linewidth = 1)
+        void generate_grid(BasePlayer player, double linewidth = 1)
         {
-            int x = 0;
-            int y = 0;
-            //generate panel for grid
-
-
             //generating vertical lines in grid_panel
             #region verticals
             linewidth /= 1000;
-            var xOffset = (1 / gridscale);
+            var xOffset = (1 / configData.gridScale);
+            PrintToChat($"scale is {configData.gridScale}");
+
 
             for (int i = 1; i * xOffset < 1; i++)
             {
                 PrintToConsole("vertical lines");
-                PrintToConsole(i.ToString());
-                PrintToConsole((i * xOffset + ""));
+                PrintToConsole($"line: {i}");
+                PrintToConsole($"line offset: {i * xOffset}");
+                PrintToConsole($"line   fade: {Convert.ToSingle(i * xOffset)}");
                 PrintToConsole("start: " + (Math.Round((i * xOffset - linewidth / 2), 3)));
                 PrintToConsole("end  : " + (Math.Round((i * xOffset - linewidth / 2), 3) + linewidth));
-
-                x += 1;
 
                 container.Add(new CuiPanel
 
                 {
-                    //FadeOut = Convert.ToSingle(i * xOffset * 2), here is correct place
+                    //Docs: works reversed than fadeIN because the less fadeOut is quickly it will dissapear the less fadeIn is quiclky it will appear, and creates effect like fade works reversed
+                    //      ToSingle because fadeIn/Out get float values instead of double
+                    //FadeOut lives out is separate component while FadeIn is child of Image
+                    //bug: fades dont start from 0f...1f because they work like line offsets, they dont get 0 or 1 
+                    FadeOut = Convert.ToSingle(i * xOffset),
                     Image = {
                     Color = "1 1 1 0.5",
-                    FadeIn = Convert.ToSingle(i * xOffset * 2)
-                   //FadeOut = Convert.ToSingle(i * xOffset * 2)
+                    FadeIn = Convert.ToSingle(i * xOffset)
+                   //FadeOut = Convert.ToSingle(i * xOffset * 2) // not here
                 },
                     RectTransform = {
                     AnchorMin = (Math.Round((i*xOffset-linewidth/2),3)+" 0"),
@@ -1079,15 +1067,17 @@ namespace Oxide.Plugins
 
             //generating horizontal lines in grid_panel
             #region horizontals
+
             linewidth = Math.Round(linewidth * 16 / 9, 3); //Round because its multiplied on 16/9
-            var yOffset = 1 / gridscale * 16 / 9;
+            var yOffset = 1 / configData.gridScale * 16 / 9;
 
             for (int i = 1; i * yOffset < 1; i++) // 16/9 considering aspect ratio 
             {
 
                 PrintToConsole("horizontal lines");
-                PrintToConsole(i.ToString());
-                PrintToConsole((i * yOffset + ""));
+                PrintToConsole($"line: {i}");
+                PrintToConsole($"line offset: {i * yOffset}");
+                PrintToConsole($"line   fade: {Convert.ToSingle(i * yOffset)}");
                 PrintToConsole("start: " + (1 - (Math.Round((i * yOffset - linewidth / 2), 3) + linewidth)));
                 PrintToConsole("end  : " + (1 - Math.Round((i * yOffset - linewidth / 2), 3)));
 
@@ -1096,19 +1086,19 @@ namespace Oxide.Plugins
                 // Puts(Math.Round((i * yOffset - linewidth / 2), 3) + " 0");
                 // Puts(Math.Round((i * yOffset + linewidth / 2), 3) + " 0");
 
-                y += 1;
-
                 container.Add(new CuiPanel
                 {
+                    //Docs: works reversed than fadeIN because the less fadeOut is quickly it will dissapear the less fadeIn is quiclky it will appear, and creates effect like fade works reversed
+                    //      ToSingle because fadeIn/Out get float values instead of double
+                    FadeOut = Convert.ToSingle(i * yOffset),
                     Image = {
-                    Color = "1 1 1 0.5",
-                    FadeIn = Convert.ToSingle(i * yOffset * 9/16 * 3)
-                    //FadeOut = Convert.ToSingle(i * yOffset * 9/16 * 3)
+                        Color = "1 1 1 0.5",
+                        FadeIn = Convert.ToSingle(i * yOffset),
                     },
                     RectTransform = {
-                    AnchorMin = "0 "+(1 - ( Math.Round( (i * yOffset - linewidth / 2)  , 3) + linewidth )),
-                    AnchorMax = "1 "+(Math.Round(1-(i*yOffset-linewidth/2),3)) //not reversing Y,it wont make any sence for grid lines
-                    //AnchorMax = (AnchorMin.y+linewidth)+" 1"
+                        AnchorMin = "0 "+(1 - ( Math.Round( (i * yOffset - linewidth / 2)  , 3) + linewidth )),
+                        AnchorMax = "1 "+(Math.Round(1-(i*yOffset-linewidth/2),3)) //not reversing Y,it wont make any sence for grid lines
+                        //AnchorMax = (AnchorMin.y+linewidth)+" 1"
                     },
                 }, "grid_panel", $"horizontal_line_{i}");
 
@@ -1117,13 +1107,6 @@ namespace Oxide.Plugins
                 //PrintToConsole("" + configData.aviabilityMatrix[3, 0]);
             }
 
-            if (!configData.aviabilityIsCreated)
-            {
-                createAviability(x + 1, y + 1); //??? it shouldnot be created here
-                PrintToConsole($"createAviability width: {x + 1} height: {y + 1}");
-                configData.aviabilityIsCreated = true;
-                SaveConfig(configData);//???
-            }
             #endregion
 
         }
@@ -1133,14 +1116,24 @@ namespace Oxide.Plugins
         //generating menu at startup from config/data file
         void generate_menu(BasePlayer player)
         {
+
+
+            if (!configData.aviabilityIsCreated)
+            {
+
+                createAviability(xLinesCount + 1, yLinesCount + 1); //??? it shouldnot be created here, Yes YES! it should not be created here :D problem is I dont have necessary data before player comes to generating grid
+                PrintToConsole($"createAviability width: {xLinesCount + 1} height: {yLinesCount + 1}");
+                configData.aviabilityIsCreated = true;
+                SaveConfig(configData);//???
+            }
             //======================= Main Layer ===========================
             //creating main panel for menu
             var menuPanel = container.Add(new CuiPanel
             {
-                //FadeOut = 0.5f,  //$$
+                //FadeOut = 0.5f,  //!important
                 Image = {
                     Color = "0 0 0 0.5",
-                    //FadeIn = 0.5f //$$
+                    //FadeIn = 0.5f //!important
                 },
                 RectTransform = {
                     AnchorMin = "0.2 0.2",
@@ -1150,12 +1143,15 @@ namespace Oxide.Plugins
 
 
             }, "Hud", "menu_panel");
-            PrintToConsole("created menu");
 
             //========================= Grid Layer ===============================================
             //creating panel for grid lines
+
+            //Docs: saving what is the grid position in container to later use it for toggling grid
+            gridPosInContainer = container.Count;
             var gridPanel = container.Add(new CuiPanel
             {
+                FadeOut = 1f, //doesnot have any impact, IDK why, ithought it should
                 Image = {
                     Color = "0 0 0 0" //fully transparent
                 },
@@ -1354,7 +1350,6 @@ namespace Oxide.Plugins
             //VALIDATE if correct page is requested
             if (wishedPage > configData.pageCount || wishedPage < 1)
             {
-                PrintToConsole("//$$");
                 return;
             }
 
@@ -1373,7 +1368,7 @@ namespace Oxide.Plugins
             //UPDATE CONFIG
             configData.currentPage = wishedPage;
             SaveConfig(configData);
-            mutate_container();
+            mutate_container("pages");
             refresh_menu(player);
         }
 
@@ -1395,17 +1390,55 @@ namespace Oxide.Plugins
             menuIsOpen = !menuIsOpen;
         }
 
+        void toggle_grid(BasePlayer player)
+        {
+            if (gridIsOpen)
+            {
+                destroy_grid_lines(player);
+                mutate_container("grid");
+            }
+            else
+            {
+                if (!gridIsCreated)
+                {
+                    generate_grid(player);
+                    gridIsCreated = true;
+                }
+                mutate_container("grid");
+                refresh_menu(player);
+            }
+            gridIsOpen = !gridIsOpen;
+        }
+
+
+        void destroy_grid_lines(BasePlayer player)
+        {
+            PrintToConsole($"xLinesCount: {xLinesCount}");
+            for (int i = 1; i <= xLinesCount; i++)
+            {
+                CuiHelper.DestroyUi(player, $"vertical_line_{i}");
+                PrintToConsole($"destroyed vertical_line_{i}");
+            }
+            PrintToConsole($"yLinesCount: {yLinesCount}");
+            for (int i = 1; i <= yLinesCount; i++)
+            {
+                CuiHelper.DestroyUi(player, $"horizontal_line_{i}");
+                PrintToConsole($"destroyed horizontal_line_{i}");
+            }
+        }
+
         void refresh_menu(BasePlayer player)
         {
 
             CuiHelper.DestroyUi(player, "menu_panel");
             CuiHelper.AddUi(player, container);
             //check grid
+            /* // noo need for check now
             if (gridIsOpen == false)
             {
                 CuiHelper.DestroyUi(player, "grid_panel");
             }
-
+            */
             //destroy all pages that you dont want to be visible
             /*
             for (var i = 1; i <= configData.pageCount; i++)
@@ -1447,19 +1480,44 @@ namespace Oxide.Plugins
            */
         }
 
-        void mutate_container()
+        void mutate_container(String type)
         {
-            foreach (KeyValuePair<int, int> prop in pagePosInContainer)
+            switch (type)
             {
-                if (prop.Key != configData.currentPage)
-                {
-                    //PrintToConsole($"type of component in cuiElement: {container[pagePosInContainer[i]].Components[1].Type}");
-                    container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0 0" };
-                }
-                else
-                {
-                    container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "1 1" };
-                }
+
+                case "grid":
+                    if (gridIsOpen)
+                    {
+                        //grid_panel position in container is saved in gridPosInContainer;
+                        //PrintToChat($"mutating grid panel size to 0");
+                        //PrintToChat($"position in container: {gridPosInContainer}");
+                        container[gridPosInContainer].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0 0" };
+                    }
+                    else
+                    {
+                        //PrintToChat($"mutating grid panel size to 1");
+                        //PrintToChat($"position in container: {gridPosInContainer}");
+                        container[gridPosInContainer].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "1 1" };
+                    }
+
+                    break;
+                case "pages":
+                    foreach (KeyValuePair<int, int> prop in pagePosInContainer)
+                    {
+
+                        if (prop.Key != configData.currentPage)
+                        {
+                            //PrintToConsole($"type of component in cuiElement: {container[pagePosInContainer[i]].Components[1].Type}");
+                            //PrintToChat($"Other page: {prop.Key} with position {prop.Value} has been mutated to size 0");
+                            container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "0 0" };
+                        }
+                        else
+                        {
+                            //PrintToChat($"Wished page: {prop.Key} with position {prop.Value} has been mutated to size 1");
+                            container[prop.Value].Components[1] = new CuiRectTransformComponent { AnchorMin = "0 0", AnchorMax = "1 1" };
+                        }
+                    }
+                    break;
             }
         }
     }
